@@ -23,7 +23,7 @@ public class YandexDiskService {
     public void handleSystemItemImportRequest(SystemItemImportRequest request) throws ValidationException {
         systemItemImportRequestIsValid(request);
         for (SystemItemImport systemItemImport : request.getItems()) {
-            // Вытаскиваем systemItem, ставим ему дату из запроса
+            // Вытаскиваем каждый systemItem, ставим ему дату из запроса и сохраняем
             SystemItem systemItem = SystemItem.builder()
                     .id(systemItemImport.getId())
                     .url(systemItemImport.getUrl())
@@ -32,17 +32,11 @@ public class YandexDiskService {
                     .systemItemType(systemItemImport.getType())
                     .size(systemItemImport.getSize())
                     .build();
-            // Если есть родитель, составляем связь и сохраняем
-            if (systemItemImport.getParentId() != null) {
-                SystemItem parent = repository.findById(systemItemImport.getParentId()).get();
-               // repository.save(systemItem);
-               // repository.createRelationship(systemItem.getId(), parent.getParentId());
-            } else {
-                // если нет родителя, то просто сохраняем
+
                 log.info("Trying to save systemItem with id {}", systemItem.getId());
                 repository.save(systemItem);
                 log.info("Save systemItem with id {} was successful", systemItem.getId());
-            }
+
         }
     }
 
