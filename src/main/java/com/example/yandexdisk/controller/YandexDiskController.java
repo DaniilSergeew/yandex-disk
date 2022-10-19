@@ -43,7 +43,7 @@ public class YandexDiskController {
             description = "При получении информации о папке также предоставляется информация о её дочерних элементах."
     )
     @GetMapping("nodes/{id}")
-    public void getNodesById(@PathVariable UUID id) {
+    public void getNodesById(@PathVariable String id) {
         service.getSystemItemsById(id);
     }
 

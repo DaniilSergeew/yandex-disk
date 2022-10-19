@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface Dao <T> {
-    Optional<T> findById(UUID id);
+    Optional<T> findById(String id);
 
     List<T> getAllById();
 

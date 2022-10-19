@@ -13,5 +13,5 @@ public class SystemItemImportRequest {
     private List<SystemItemImport> items;
 
     @NotNull
-    private LocalDateTime date;
+    private LocalDateTime updateDate;
 }

@@ -9,11 +9,11 @@ import java.util.UUID;
 @Data
 public class SystemItemImport {
     @NotNull
-    private UUID id;
+    private String id;
 
     private String url;
 
-    private UUID parentId;
+    private String parentId;
 
     private SystemItemType systemItemType;
 

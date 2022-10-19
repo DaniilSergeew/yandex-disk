@@ -27,7 +27,7 @@ public class YandexDiskApiService {
         log.info("Deleting SystemItems by id: {} was successful", id);
     }
 
-    public void getSystemItemsById(UUID id) {
+    public void getSystemItemsById(String id) {
         log.info("Trying to get Sales List by id: {}...", id);
         service.handleSystemItemGetRequest(id);
         log.info("Getting SystemItems by id: {} was successful", id);

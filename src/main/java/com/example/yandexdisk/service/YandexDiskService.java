@@ -29,7 +29,7 @@ public class YandexDiskService {
                     .id(systemItemImport.getId())
                     .url(systemItemImport.getUrl())
                     .parentId(systemItemImport.getParentId())
-                    .date(request.getDate())
+                    .date(request.getUpdateDate())
                     .systemItemType(systemItemImport.getSystemItemType())
                     .size(systemItemImport.getSize())
                     .build();
@@ -51,17 +51,17 @@ public class YandexDiskService {
 
     }
 
-    public void handleSystemItemGetRequest(UUID id) {
+    public void handleSystemItemGetRequest(String id) {
         repository.findById(id);
     }
 
     private void systemItemImportRequestIsValid(SystemItemImportRequest request) throws ValidationException {
-        Set<UUID> uuids = new HashSet<>();
+        Set<String> ids = new HashSet<>();
         for (SystemItemImport systemItemImport : request.getItems()) {
             // Проверка на: в одном запросе не может быть двух элементов с одинаковым id
-            if (uuids.contains(systemItemImport.getId()))
+            if (ids.contains(systemItemImport.getId()))
                 throw new ValidationException("ShopUnitImport ID shouldn't be repeated");
-            else uuids.add(systemItemImport.getId());
+            else ids.add(systemItemImport.getId());
             // Проверка на: поле id не может быть равно null осуществляется аннотацией @NotNull в классе systemItemImport
             // Проверка на: родителем элемента может быть только папка
             if (systemItemImport.getParentId() != null) {

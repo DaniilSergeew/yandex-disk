@@ -13,11 +13,11 @@ import java.util.UUID;
 @NoArgsConstructor
 @Data
 public class SystemItem {
-    private UUID id;
+    private String id;
 
     private String url;
 
-    private UUID parentId;
+    private String parentId;
 
     private LocalDateTime date;
 
