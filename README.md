@@ -1,2 +1,3 @@
 # yandex-disk
-Test project for Yandex Backend School
+Тестовый проект в школу бэкенд разработки Яндекса
+Сейчас находится в стадии разработки
