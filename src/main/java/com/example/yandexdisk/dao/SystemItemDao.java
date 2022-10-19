@@ -24,7 +24,7 @@ public class SystemItemDao implements Dao<SystemItem> {
 
     @Override
     public void save(SystemItem systemItem) {
-        // Todo: подумать о том, как достичь уникальности и можно ли поменять типо primary key в БД
+        // Todo: подумать о том, как достичь уникальности и можно ли поменять тип primary key в БД
         // https://neo4j.com/developer/kb/how-to-implement-a-primary-key-property-for-a-label/
         String query = "CREATE (s:SystemItem {type: $0, UUID: $1, url: $2, date: $3, size: $4})";
         log.info("Trying to connect to the database...");
