@@ -4,6 +4,7 @@ import com.example.yandexdisk.dao.SystemItemDao;
 import com.example.yandexdisk.dto.SystemItemImport;
 import com.example.yandexdisk.dto.request.SystemItemImportRequest;
 import com.example.yandexdisk.exception.ValidationException;
+import com.example.yandexdisk.model.SystemItem;
 import com.example.yandexdisk.model.SystemItemType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,38 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class YandexDiskService {
     private final SystemItemDao repository;
+
+    public void handleSystemItemImportRequest(SystemItemImportRequest request) throws ValidationException {
+        systemItemImportRequestIsValid(request);
+        for (SystemItemImport systemItemImport : request.getItems()) {
+            // Вытаскиваем systemItem, ставим ему дату из запроса
+            SystemItem systemItem = SystemItem.builder()
+                    .id(systemItemImport.getId())
+                    .url(systemItemImport.getUrl())
+                    .parentId(systemItemImport.getParentId())
+                    .date(request.getDate())
+                    .systemItemType(systemItemImport.getSystemItemType())
+                    .size(systemItemImport.getSize())
+                    .build();
+            // Если есть родитель, составляем связь и сохраняем
+            if (systemItemImport.getParentId() != null) {
+                SystemItem parent = repository.findById(systemItemImport.getParentId()).get();
+               // repository.save(systemItem);
+               // repository.createRelationship(systemItem.getId(), parent.getParentId());
+            } else {
+                // если нет родителя, то просто сохраняем
+                repository.save(systemItem);
+            }
+        }
+    }
+
+    public void handleSystemItemDeleteRequest(UUID id) {
+
+    }
+
+    public void handleSystemItemGetRequest(UUID id) {
+        repository.findById(id);
+    }
 
     private void systemItemImportRequestIsValid(SystemItemImportRequest request) throws ValidationException {
         Set<UUID> uuids = new HashSet<>();
@@ -47,7 +80,7 @@ public class YandexDiskService {
                     throw new ValidationException("SystemItemImport url Exception for FOLDER");
                 }
             }
-            // Проверка на : размер поля url при импорте файла всегда должен быть меньше либо равным 255
+            // Проверка на: размер поля url при импорте файла всегда должен быть меньше либо равным 255
             if (systemItemImport.getSystemItemType() == SystemItemType.FILE &&
                     systemItemImport.getUrl() != null && systemItemImport.getUrl().length() > 255) {
                 log.error("SystemItemImport with UUID: {} url length should be less or equal than 255", systemItemImport.getId());
