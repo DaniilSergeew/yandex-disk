@@ -7,10 +7,8 @@ import org.springframework.stereotype.Component;
 import java.sql.*;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-
-@Component
 @Slf4j
+@Component
 public class SystemItemDao implements Dao<SystemItem> {
     @Override
     public Optional<SystemItem> findById(String id) {
