@@ -1,5 +1,6 @@
 package com.example.yandexdisk.service;
 
+import com.example.yandexdisk.dao.SystemItemDao;
 import com.example.yandexdisk.dto.SystemItemImport;
 import com.example.yandexdisk.dto.request.SystemItemImportRequest;
 import com.example.yandexdisk.exception.ValidationException;
@@ -15,6 +16,8 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class YandexDiskService {
+    private final SystemItemDao repository;
+
     private void systemItemImportRequestIsValid(SystemItemImportRequest request) throws ValidationException {
         Set<UUID> uuids = new HashSet<>();
         for (SystemItemImport systemItemImport : request.getItems()) {
