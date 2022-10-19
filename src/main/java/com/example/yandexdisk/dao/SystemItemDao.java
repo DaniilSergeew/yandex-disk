@@ -10,7 +10,7 @@ import java.util.UUID;
 @Component
 public class SystemItemDao implements Dao<SystemItem> {
     @Override
-    public Optional<SystemItem> getById(UUID id) {
+    public Optional<SystemItem> findById(UUID id) {
         return Optional.empty();
     }
 
