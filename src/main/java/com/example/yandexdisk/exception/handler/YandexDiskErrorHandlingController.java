@@ -15,4 +15,5 @@ public class YandexDiskErrorHandlingController {
         log.error("ValidationException " + ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
+    // Todo: добавить обработчик для sql exception
 }
