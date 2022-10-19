@@ -26,14 +26,14 @@ public class SystemItemDao implements Dao<SystemItem> {
     public void save(SystemItem systemItem) {
         log.info("Trying to connect to the database...");
         try (Connection connection = DriverManager
-                .getConnection("jdbc:neo4j:http://localhost:7687", "neo4j", "pass");
+                .getConnection("jdbc:neo4j:bolt://localhost:7687", "neo4j", "pass");
 
              PreparedStatement stmt = connection
                      .prepareStatement(
                              "CREATE (s:SystemItem {type: \"$0\", UUID: \"$1\"})");) {
             log.info("The connection was successful");
             stmt.setString(0, systemItem.getSystemItemType().toString());
-            stmt.setString(1, systemItem.getId().toString());
+            stmt.setString(1, systemItem.getId());
 
             log.info("Trying to execute the query...");
             stmt.executeUpdate();
