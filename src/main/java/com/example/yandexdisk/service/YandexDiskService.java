@@ -1,10 +1,67 @@
 package com.example.yandexdisk.service;
 
+import com.example.yandexdisk.dto.SystemItemImport;
+import com.example.yandexdisk.dto.request.SystemItemImportRequest;
+import com.example.yandexdisk.exception.ValidationException;
+import com.example.yandexdisk.model.SystemItemType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
 public class YandexDiskService {
-    
+    private void systemItemImportRequestIsValid(SystemItemImportRequest request) throws ValidationException {
+        Set<UUID> uuids = new HashSet<>();
+        for (SystemItemImport systemItemImport : request.getItems()) {
+            // Проверка на: в одном запросе не может быть двух элементов с одинаковым id
+            if (uuids.contains(systemItemImport.getId()))
+                throw new ValidationException("ShopUnitImport ID shouldn't be repeated");
+            else uuids.add(systemItemImport.getId());
+            // Проверка на: поле id не может быть равно null осуществляется аннотацией @NotNull в классе systemItemImport
+            // Проверка на: родителем элемента может быть только папка
+            if (systemItemImport.getParentId() != null) {
+                // todo родитель может быть не в запросе, а в базе?
+                Optional<SystemItemImport> parentItem = request
+                        .getItems()
+                        .stream()
+                        .filter(p -> p.getId().equals(systemItemImport.getParentId()))
+                        .findFirst();
+                if (parentItem.isPresent() && parentItem.get().getSystemItemType() == SystemItemType.FILE) {
+                    log.error("SystemItemImport ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
+                            systemItemImport.getParentId());
+                    throw new ValidationException("SystemItemImport Parent Id Exception");
+                }
+            }
+            // Проверка на: поле url при импорте папки всегда должно быть равно null
+            if (systemItemImport.getSystemItemType() == SystemItemType.FOLDER) {
+                if (systemItemImport.getUrl() != null) {
+                    log.error("SystemItemImport with UUID: {} url for FOLDER should be NULL", systemItemImport.getId());
+                    throw new ValidationException("SystemItemImport url Exception for FOLDER");
+                }
+            }
+            // Проверка на : размер поля url при импорте файла всегда должен быть меньше либо равным 255
+            if (systemItemImport.getSystemItemType() == SystemItemType.FILE &&
+                    systemItemImport.getUrl() != null && systemItemImport.getUrl().length() > 255) {
+                log.error("SystemItemImport with UUID: {} url length should be less or equal than 255", systemItemImport.getId());
+                throw new ValidationException("SystemItemImport url length Exception");
+            }
+            // Проверка на: поле size при импорте папки всегда должно быть равно null
+            if (systemItemImport.getSystemItemType() == SystemItemType.FOLDER &&
+                    systemItemImport.getSize() != null) {
+                log.error("SystemItemImport with UUID: {} size for FOLDER should be NULL", systemItemImport.getId());
+                throw new ValidationException("SystemItemImport FOLDER size Exception");
+            }
+            // Проверка на: поле size для файлов всегда должно быть больше 0
+            if (systemItemImport.getSystemItemType() == SystemItemType.FILE &&
+                    systemItemImport.getSize() <= 0) {
+                log.error("SystemItemImport with UUID: {} size for Folder should be more than 0", systemItemImport.getId());
+                throw new ValidationException("SystemItemImport FILE size Exception");
+            }
+        }
+    }
 }
