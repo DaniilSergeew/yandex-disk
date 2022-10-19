@@ -24,7 +24,7 @@ public class YandexDiskController {
                     "Порядок элементов в запросе является произвольным."
     )
     @PostMapping("/imports")
-    public void importSystemItems(@Valid SystemItemImportRequest request) throws ValidationException {
+    public void importSystemItems(@Valid @RequestBody SystemItemImportRequest request) throws ValidationException {
         service.saveSystemItems(request);
     }
 
@@ -34,7 +34,7 @@ public class YandexDiskController {
                     "Доступ к истории обновлений удаленного элемента невозможен."
     )
     @DeleteMapping("delete/{id}")
-    public void deleteSystemItems(@PathVariable UUID id) {
+    public void deleteSystemItems(@PathVariable String id) {
         service.deleteSystemItemsById(id);
     }
 
