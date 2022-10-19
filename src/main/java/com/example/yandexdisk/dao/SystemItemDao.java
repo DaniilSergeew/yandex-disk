@@ -14,6 +14,21 @@ import java.util.UUID;
 public class SystemItemDao implements Dao<SystemItem> {
     @Override
     public Optional<SystemItem> findById(String id) {
+        String query = "MATCH (s:SystemItem) WHERE s.id = $0 RETURN s";
+        log.info("Trying to connect to the database...");
+        try (Connection con = DriverManager
+                .getConnection("jdbc:neo4j:bolt://localhost:7687", "neo4j", "pass");
+             PreparedStatement stmt = con.prepareStatement(query)) {
+            log.info("The connection was successful");
+            stmt.setString(0, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    // Todo: собрать объект и подумать над тем, как вернуть пустой Optional, если ничего не нашлось
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         return Optional.empty();
     }
 
@@ -26,7 +41,7 @@ public class SystemItemDao implements Dao<SystemItem> {
     public void save(SystemItem systemItem) {
         // Todo: подумать о том, как достичь уникальности и можно ли поменять тип primary key в БД
         // https://neo4j.com/developer/kb/how-to-implement-a-primary-key-property-for-a-label/
-        String query = "CREATE (s:SystemItem {type: $0, UUID: $1, url: $2, date: $3, size: $4})";
+        String query = "CREATE (s:SystemItem {type: $0, id: $1, url: $2, date: $3, size: $4})";
         log.info("Trying to connect to the database...");
         try (Connection con = DriverManager
                 .getConnection("jdbc:neo4j:bolt://localhost:7687", "neo4j", "pass");
