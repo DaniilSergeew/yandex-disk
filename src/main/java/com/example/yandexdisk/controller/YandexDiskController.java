@@ -6,10 +6,10 @@ import com.example.yandexdisk.service.api.YandexDiskApiService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,7 +24,7 @@ public class YandexDiskController {
                     "Порядок элементов в запросе является произвольным."
     )
     @PostMapping("/imports")
-    public void importSystemItems(@Valid @RequestBody SystemItemImportRequest request) throws ValidationException {
+    public void importSystemItems(@RequestBody SystemItemImportRequest request) throws ValidationException {
         service.saveSystemItems(request);
     }
 
