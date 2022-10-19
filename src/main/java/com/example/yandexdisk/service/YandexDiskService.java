@@ -8,6 +8,7 @@ import com.example.yandexdisk.model.SystemItem;
 import com.example.yandexdisk.model.SystemItemType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
+@Service
 public class YandexDiskService {
     private final SystemItemDao repository;
 
