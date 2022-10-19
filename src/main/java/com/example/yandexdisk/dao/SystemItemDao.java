@@ -26,9 +26,9 @@ public class SystemItemDao implements Dao<SystemItem> {
     public void save(SystemItem systemItem) {
         String query = "CREATE (s:SystemItem {type: $0, UUID: $1})";
         log.info("Trying to connect to the database...");
-        try (Connection connection = DriverManager
+        try (Connection con = DriverManager
                 .getConnection("jdbc:neo4j:bolt://localhost:7687", "neo4j", "pass");
-             PreparedStatement stmt = connection.prepareStatement(query);) {
+             PreparedStatement stmt = con.prepareStatement(query);) {
             log.info("The connection was successful");
             stmt.setString(0, systemItem.getSystemItemType().toString());
             stmt.setString(1, systemItem.getId());
