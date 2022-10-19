@@ -26,7 +26,7 @@ public class YandexDiskController {
 
     @GetMapping("nodes/{id}")
     public void getNodesById(@PathVariable UUID id) {
-        service.deleteSystemItemsById(id);
+        service.getSystemItemsById(id);
     }
 
 }
