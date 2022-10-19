@@ -40,7 +40,9 @@ public class YandexDiskService {
                // repository.createRelationship(systemItem.getId(), parent.getParentId());
             } else {
                 // если нет родителя, то просто сохраняем
+                log.info("Trying to save systemItem with id {}", systemItem.getId());
                 repository.save(systemItem);
+                log.info("Save systemItem with id {} was successful", systemItem.getId());
             }
         }
     }
