@@ -47,7 +47,7 @@ public class YandexDiskService {
         }
     }
 
-    public void handleSystemItemDeleteRequest(UUID id) {
+    public void handleSystemItemDeleteRequest(String id) {
 
     }
 
