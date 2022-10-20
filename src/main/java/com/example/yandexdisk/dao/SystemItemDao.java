@@ -23,8 +23,7 @@ public class SystemItemDao implements Dao<SystemItem> {
     public Optional<SystemItem> findById(String id) {
         String query = "MATCH (s:SystemItem) WHERE s.id = $0 RETURN s";
         log.info("Trying to connect to the database...");
-        try (Connection con = DriverManager
-                .getConnection("jdbc:neo4j:bolt://localhost:7687", "neo4j", "pass");
+        try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(query)) {
             log.info("The connection was successful");
             stmt.setString(0, id);
@@ -49,8 +48,7 @@ public class SystemItemDao implements Dao<SystemItem> {
         // CREATE CONSTRAINT UUID_UNIQUE FOR (s:SystemItem) REQUIRE s.UUID IS UNIQUE
         String query = "CREATE (s:SystemItem {type: $0, id: $1, url: $2, date: $3, size: $4})";
         log.info("Trying to connect to the database...");
-        try (Connection con = DriverManager
-                .getConnection("jdbc:neo4j:bolt://localhost:7687", "neo4j", "pass");
+        try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(query)) {
             log.info("The connection was successful");
 
