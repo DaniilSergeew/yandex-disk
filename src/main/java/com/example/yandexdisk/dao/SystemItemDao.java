@@ -66,8 +66,8 @@ public class SystemItemDao extends Dao<SystemItem> {
             stmt.setString(2, systemItem.getUrl());
             stmt.setString(3, systemItem.getDate().toString());
             stmt.setString(4, systemItem.getSize().toString());
-            // Todo: написать более подробный лог
-            log.info("Trying to execute the query...");
+
+            log.info("Trying to execute the query to save {}", systemItem.getId());
             stmt.executeUpdate();
             log.info("The query is successfully executed");
         } catch (SQLException e) {
@@ -115,8 +115,8 @@ public class SystemItemDao extends Dao<SystemItem> {
             stmt.setString(0, child.getId());
             stmt.setString(1, parent.getId());
 
-            // Todo: написать более подробный лог
-            log.info("Trying to execute the query...");
+            log.info("Trying to execute the query to create relationship between {} and {}",
+                    child.getId(), parent.getId());
             stmt.executeUpdate();
             log.info("The query is successfully executed");
         } catch (SQLException e) {
