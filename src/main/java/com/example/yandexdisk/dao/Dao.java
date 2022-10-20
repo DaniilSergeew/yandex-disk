@@ -3,7 +3,7 @@ package com.example.yandexdisk.dao;
 import java.util.List;
 import java.util.Optional;
 /**
- * CRUD
+ * Абстрактный класс с CRUD методами
  */
 public abstract class Dao <T> {
     public abstract Optional<T> findById(String id);
