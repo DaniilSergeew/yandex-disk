@@ -14,6 +14,11 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Класс, отвечающий за логику обработки запросов.
+ * Работает с базой данных посредством объекта SystemItemDao
+ */
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -33,10 +38,9 @@ public class YandexDiskService {
                     .size(systemItemImport.getSize())
                     .build();
 
-                log.info("Trying to save systemItem with id {}", systemItem.getId());
-                repository.save(systemItem);
-                log.info("Save systemItem with id {} was successful", systemItem.getId());
-
+            log.info("Trying to save systemItem with id {}", systemItem.getId());
+            repository.save(systemItem);
+            log.info("Save systemItem with id {} was successful", systemItem.getId());
         }
     }
 
@@ -48,6 +52,10 @@ public class YandexDiskService {
         repository.findById(id);
     }
 
+    /**
+     * Проверяет валидность запроса на импорт
+     * @param request объект запроса
+     */
     private void systemItemImportRequestIsValid(SystemItemImportRequest request) throws ValidationException {
         Set<String> ids = new HashSet<>();
         for (SystemItemImport systemItemImport : request.getItems()) {

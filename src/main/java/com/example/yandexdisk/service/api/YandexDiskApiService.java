@@ -7,8 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-
+/**
+ * Класс, перенаправляющий запросы на конкретный сервис
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
