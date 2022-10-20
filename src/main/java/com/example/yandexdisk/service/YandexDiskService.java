@@ -59,6 +59,7 @@ public class YandexDiskService {
             // Проверка на: родителем элемента может быть только папка
             if (systemItemImport.getParentId() != null) {
                 // todo родитель может быть не в запросе, а в базе?
+                // Todo: сделать запрос в базу на поиск родителя и проверить тип элеманта
                 Optional<SystemItemImport> parentItem = request
                         .getItems()
                         .stream()

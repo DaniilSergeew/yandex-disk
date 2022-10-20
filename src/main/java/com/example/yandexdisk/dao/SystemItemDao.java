@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import java.sql.*;
 import java.util.List;
 import java.util.Optional;
+
 @Slf4j
 @Component
 public class SystemItemDao implements Dao<SystemItem> {
@@ -37,8 +38,7 @@ public class SystemItemDao implements Dao<SystemItem> {
 
     @Override
     public void save(SystemItem systemItem) {
-        // Todo: подумать о том, как достичь уникальности и можно ли поменять тип primary key в БД
-        // https://neo4j.com/developer/kb/how-to-implement-a-primary-key-property-for-a-label/
+        // CREATE CONSTRAINT UUID_UNIQUE FOR (s:SystemItem) REQUIRE s.UUID IS UNIQUE
         String query = "CREATE (s:SystemItem {type: $0, id: $1, url: $2, date: $3, size: $4})";
         log.info("Trying to connect to the database...");
         try (Connection con = DriverManager
@@ -60,7 +60,13 @@ public class SystemItemDao implements Dao<SystemItem> {
         }
 
         if (systemItem.getParentId() != null) {
-            // Todo: прежде чем писать, хорошо подумай как избежать говны
+            // Если родитель уже в базе
+            Optional<SystemItem> parent = findById(systemItem.getParentId());
+            if (parent.isPresent()) {
+                // запрос на создание связи
+                //
+            }
+            // Если родитель будет дальше в запросе, то ребенок будет в бд и выполнится код сверху
         }
     }
 
