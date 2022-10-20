@@ -4,13 +4,13 @@ import java.util.List;
 import java.util.Optional;
 
 public abstract class Dao <T> {
-    abstract Optional<T> findById(String id);
+    public abstract Optional<T> findById(String id);
 
     abstract List<T> getAllById();
 
-    abstract void save(T t);
+    public abstract void save(T t);
 
-    abstract void update(T t);
+    public abstract void update(T t);
 
-    abstract void deleteById(T t);
+    public abstract void deleteById(T t);
 }
