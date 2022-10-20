@@ -50,7 +50,7 @@ public class SystemItemDao extends Dao<SystemItem> {
     // Todo: подумать как это все можно сломать
     /**
      * Сохраняет сущность в БД.
-     * Создает связь сущности с родителем, если тот есть в БД
+     * Создает двухстороннюю связь родитель-ребенок, если тот есть в БД
      */
     @Override
     public void save(SystemItem systemItem) {
@@ -97,7 +97,6 @@ public class SystemItemDao extends Dao<SystemItem> {
 
     /**
      * Создает двухстороннюю связь родитель-ребенок в БД
-     *
      * @param child  ребенок, уже имеющийся в БД
      * @param parent родитель, уже имеющийся в БД
      */
