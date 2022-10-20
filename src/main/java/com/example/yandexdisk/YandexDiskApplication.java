@@ -9,5 +9,5 @@ public class YandexDiskApplication {
     public static void main(String[] args) {
         SpringApplication.run(YandexDiskApplication.class, args);
     }
-
+// CREATE CONSTRAINT UUID_UNIQUE FOR (s:SystemItem) REQUIRE s.UUID IS UNIQUE
 }
