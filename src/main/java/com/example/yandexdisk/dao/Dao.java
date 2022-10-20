@@ -3,14 +3,14 @@ package com.example.yandexdisk.dao;
 import java.util.List;
 import java.util.Optional;
 
-public interface Dao <T> {
-    Optional<T> findById(String id);
+public abstract class Dao <T> {
+    abstract Optional<T> findById(String id);
 
-    List<T> getAllById();
+    abstract List<T> getAllById();
 
-    void save(T t);
+    abstract void save(T t);
 
-    void update(T t);
+    abstract void update(T t);
 
-    void deleteById(T t);
+    abstract void deleteById(T t);
 }

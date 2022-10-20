@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Slf4j
 @Component
-public class SystemItemDao implements Dao<SystemItem> {
+public class SystemItemDao extends Dao<SystemItem> {
 
     private Connection getConnection() throws SQLException {
         String path = "jdbc:neo4j:bolt://localhost:7687";
