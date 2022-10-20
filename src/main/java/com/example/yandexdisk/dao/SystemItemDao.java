@@ -57,7 +57,7 @@ public class SystemItemDao extends Dao<SystemItem> {
             stmt.setString(2, systemItem.getUrl());
             stmt.setString(3, systemItem.getDate().toString());
             stmt.setString(4, systemItem.getSize().toString());
-
+            // Todo: написать более подробный лог
             log.info("Trying to execute the query...");
             stmt.executeUpdate();
             log.info("The query is successfully executed");
@@ -69,8 +69,27 @@ public class SystemItemDao extends Dao<SystemItem> {
             // Если родитель уже в базе
             Optional<SystemItem> parent = findById(systemItem.getParentId());
             if (parent.isPresent()) {
-                // запрос на создание связи
-                //
+                query = "MATCH (child:SystemItem), (parent:SystemItem)  \n" +
+                        "WHERE child.UUID = $0 AND parent.UUID = $1" +
+                        "CREATE (child)-[:child]->(parent),\n" +
+                        "(parent)-[:parent]->(child)\n" +
+                        "RETURN child,parent";
+
+                log.info("Trying to connect to the database...");
+                try (Connection con = getConnection();
+                     PreparedStatement stmt = con.prepareStatement(query)) {
+                    log.info("The connection was successful");
+
+                    stmt.setString(0, systemItem.getId());
+                    stmt.setString(1, parent.get().getId());
+
+                    // Todo: написать более подробный лог
+                    log.info("Trying to execute the query...");
+                    stmt.executeUpdate();
+                    log.info("The query is successfully executed");
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
             }
             // Если родитель будет дальше в запросе, то ребенок будет в бд и выполнится код сверху
         }
