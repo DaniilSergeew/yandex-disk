@@ -60,14 +60,15 @@ public class YandexDiskService {
         Set<String> ids = new HashSet<>();
         for (SystemItemImport systemItemImport : request.getItems()) {
             // Проверка на: в одном запросе не может быть двух элементов с одинаковым id
+            // Todo: добавить проверку на наличие id уже в БД
             if (ids.contains(systemItemImport.getId()))
                 throw new ValidationException("ShopUnitImport ID shouldn't be repeated");
             else ids.add(systemItemImport.getId());
             // Проверка на: поле id не может быть равно null осуществляется аннотацией @NotNull в классе systemItemImport
             // Проверка на: родителем элемента может быть только папка
             if (systemItemImport.getParentId() != null) {
-                // todo родитель может быть не в запросе, а в базе?
-                // Todo: сделать запрос в базу на поиск родителя и проверить тип элеманта
+                // Родитель может быть не в запросе, а в базе?
+                // Todo: сделать запрос в базу на поиск родителя и проверить тип элемента
                 Optional<SystemItemImport> parentItem = request
                         .getItems()
                         .stream()

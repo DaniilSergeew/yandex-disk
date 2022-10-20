@@ -1,10 +1,13 @@
 package com.example.yandexdisk.dao;
 
 import com.example.yandexdisk.model.SystemItem;
+import com.example.yandexdisk.model.SystemItemType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +18,10 @@ import java.util.Optional;
 @Slf4j
 @Component
 public class SystemItemDao extends Dao<SystemItem> {
-
+    // Todo: выдохни, погуляй и хорошо подумай как все сделать чисто, аккуратно и чтобы ахуенно работало
+    // Сделать метод saveAll(List<SystemItem>), который будет формировать один запрос на сохранение и  на создание связей
+    // Соответственно сохранять не поштучно а пачкой сразу
+    // Итого: получили транзакционность импорта!!
     private Connection getConnection() throws SQLException {
         String path = "jdbc:neo4j:bolt://localhost:7687";
         String user = "neo4j";
@@ -25,6 +31,7 @@ public class SystemItemDao extends Dao<SystemItem> {
 
     @Override
     public Optional<SystemItem> findById(String id) {
+        // Todo: возвращать не обьект а список полей экземпляра
         String query = "MATCH (s:SystemItem) WHERE s.id = $0 RETURN s";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
@@ -32,14 +39,18 @@ public class SystemItemDao extends Dao<SystemItem> {
             log.info("The connection was successful");
             stmt.setString(0, id);
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    // Todo: собрать объект и подумать над тем, как вернуть пустой Optional, если ничего не нашлось
-                }
+                // Todo: выбросить исключение если ничего не нашли
+                SystemItem systemItem = new SystemItem();
+                    systemItem.setSystemItemType(SystemItemType.valueOf(rs.getString("s.type")));
+                    systemItem.setId(rs.getString("s.id"));
+                    systemItem.setDate(LocalDateTime.parse(rs.getString("s.date")));
+                    systemItem.setUrl(rs.getString("s.url"));
+                    systemItem.setSize(Integer.valueOf(rs.getString("s.size")));
+                    return Optional.of(systemItem);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return Optional.empty();
     }
 
     @Override
@@ -55,6 +66,7 @@ public class SystemItemDao extends Dao<SystemItem> {
     @Override
     public void save(SystemItem systemItem) {
         // Todo: подумать над транзакционностью всего этого дела
+        // Решение: сохранять не множеством запросов, а в один запрос всю пачку
         String query = "CREATE (s:SystemItem {type: $0, id: $1, url: $2, date: $3, size: $4})";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
@@ -80,8 +92,12 @@ public class SystemItemDao extends Dao<SystemItem> {
                 SystemItem parent = optionalParent.get();
                 createRelationship(systemItem, parent);
             }
-            // Если родитель будет дальше в запросе, то ребенок будет в бд и выполнится код сверху
         }
+    }
+
+    @Override
+    public void saveAll(Collection<SystemItem> t) {
+
     }
 
 
