@@ -11,6 +11,14 @@ import java.util.Optional;
 @Slf4j
 @Component
 public class SystemItemDao implements Dao<SystemItem> {
+
+    private Connection getConnection() throws SQLException {
+        String path = "jdbc:neo4j:bolt://localhost:7687";
+        String user = "neo4j";
+        String password = "pass";
+        return DriverManager.getConnection(path, user, password);
+    }
+
     @Override
     public Optional<SystemItem> findById(String id) {
         String query = "MATCH (s:SystemItem) WHERE s.id = $0 RETURN s";
