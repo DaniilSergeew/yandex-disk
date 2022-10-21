@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,10 +17,7 @@ import java.util.Optional;
 @Slf4j
 @Component
 public class SystemItemDao extends Dao<SystemItem> {
-    // Todo: выдохни, погуляй и хорошо подумай как все сделать чисто, аккуратно и чтобы ахуенно работало
-    // Сделать метод saveAll(List<SystemItem>), который будет формировать один запрос на сохранение и  на создание связей
-    // Соответственно сохранять не поштучно а пачкой сразу
-    // Итого: получили транзакционность импорта!!
+
     private Connection getConnection() throws SQLException {
         String path = "jdbc:neo4j:bolt://localhost:7687";
         String user = "neo4j";
@@ -41,12 +37,12 @@ public class SystemItemDao extends Dao<SystemItem> {
             try (ResultSet rs = stmt.executeQuery()) {
                 // Todo: выбросить исключение если ничего не нашли
                 SystemItem systemItem = new SystemItem();
-                    systemItem.setSystemItemType(SystemItemType.valueOf(rs.getString("s.type")));
-                    systemItem.setId(rs.getString("s.id"));
-                    systemItem.setDate(LocalDateTime.parse(rs.getString("s.date")));
-                    systemItem.setUrl(rs.getString("s.url"));
-                    systemItem.setSize(Integer.valueOf(rs.getString("s.size")));
-                    return Optional.of(systemItem);
+                systemItem.setSystemItemType(SystemItemType.valueOf(rs.getString("s.type")));
+                systemItem.setId(rs.getString("s.id"));
+                systemItem.setDate(LocalDateTime.parse(rs.getString("s.date")));
+                systemItem.setUrl(rs.getString("s.url"));
+                systemItem.setSize(Integer.valueOf(rs.getString("s.size")));
+                return Optional.of(systemItem);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -59,14 +55,13 @@ public class SystemItemDao extends Dao<SystemItem> {
     }
 
     // Todo: подумать как это все можно сломать
+
     /**
      * Сохраняет сущность в БД.
-     * Создает двухстороннюю связь родитель-ребенок, если тот есть в БД
+     * Создает двухстороннюю связь родитель-ребенок, если родитель тот есть в БД
      */
     @Override
     public void save(SystemItem systemItem) {
-        // Todo: подумать над транзакционностью всего этого дела
-        // Решение: сохранять не множеством запросов, а в один запрос всю пачку
         String query = "CREATE (s:SystemItem {type: $0, id: $1, url: $2, date: $3, size: $4})";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
@@ -95,11 +90,66 @@ public class SystemItemDao extends Dao<SystemItem> {
         }
     }
 
+    /**
+     * Сохраняет лист сущностей в БД.
+     * Создает двухсторонние связи родитель-ребенок в БД, если это возможно.
+     */
     @Override
-    public void saveAll(Collection<SystemItem> t) {
-
+    public void saveAll(List<SystemItem> systemItems) {
+        // Создаем запрос к базе на сохранение и выполняем его
+        String query = getSaveAllQuery(systemItems);
+        log.info("Trying to connect to the database...");
+        try (Connection con = getConnection();
+             PreparedStatement stmt = con.prepareStatement(query)) {
+            log.info("The connection was successful");
+            log.info("Trying to execute the query to save systemItems");
+            stmt.executeUpdate();
+            log.info("The query is successfully executed");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        // Перебираем элементы и связываем их с родителями, если родители находятся в базе
+        for (SystemItem systemItem : systemItems) {
+            if (systemItem.getParentId() != null) {
+                Optional<SystemItem> optionalParent = findById(systemItem.getParentId());
+                if (optionalParent.isPresent()) {
+                    SystemItem parent = optionalParent.get();
+                    createRelationship(systemItem, parent);
+                }
+            }
+        }
     }
 
+    /**
+     * @return запрос на сохранение листа сущностей в БД без создания связей
+     */
+    private String getSaveAllQuery(List<SystemItem> systemItems) {
+        StringBuilder query = new StringBuilder("CREATE ");
+        for (int i = 0; i < systemItems.size(); i++) {
+            SystemItem curr = systemItems.get(i);
+            // add type
+            query.append("(s:SystemItem {");
+            query.append("type: ");
+            query.append("\"").append(curr.getSystemItemType()).append("\"").append(", ");
+            // add id
+            query.append("id: ");
+            query.append("\"").append(curr.getId()).append("\"").append(", ");
+            // add url
+            query.append("url: ");
+            query.append("\"").append(curr.getUrl()).append("\"").append(", ");
+            // add date
+            query.append("date: ");
+            query.append("\"").append(curr.getDate()).append("\"").append(", ");
+            // add size
+            query.append("size: ");
+            query.append("\"").append(curr.getSize()).append("\"");
+            query.append("})");
+            if (i != systemItems.size() - 1) {
+                query.append(", ");
+            }
+        }
+        return query.toString();
+    }
 
     @Override
     public void update(SystemItem systemItem) {
@@ -113,6 +163,7 @@ public class SystemItemDao extends Dao<SystemItem> {
 
     /**
      * Создает двухстороннюю связь родитель-ребенок в БД
+     *
      * @param child  ребенок, уже имеющийся в БД
      * @param parent родитель, уже имеющийся в БД
      */
