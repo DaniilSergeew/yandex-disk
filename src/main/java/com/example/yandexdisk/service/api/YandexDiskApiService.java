@@ -1,6 +1,7 @@
 package com.example.yandexdisk.service.api;
 
 import com.example.yandexdisk.dto.request.SystemItemImportRequest;
+import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.exception.ValidationException;
 import com.example.yandexdisk.service.YandexDiskService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class YandexDiskApiService {
         log.info("Deleting SystemItems by id: {} was successful", id);
     }
 
-    public void getSystemItemsById(String id) {
+    public void getSystemItemsById(String id) throws EntityNotFoundException {
         log.info("Trying to get Sales List by id: {}...", id);
         service.handleSystemItemGetRequest(id);
         log.info("Getting SystemItems by id: {} was successful", id);

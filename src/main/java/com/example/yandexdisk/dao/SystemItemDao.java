@@ -1,5 +1,6 @@
 package com.example.yandexdisk.dao;
 
+import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.model.SystemItem;
 import com.example.yandexdisk.model.SystemItemType;
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +9,6 @@ import org.springframework.stereotype.Component;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Класс, реализующий crud операции с БД
@@ -26,27 +26,31 @@ public class SystemItemDao extends Dao<SystemItem> {
     }
 
     @Override
-    public Optional<SystemItem> findById(String id) {
-        // Todo: возвращать не обьект а список полей экземпляра
-        String query = "MATCH (s:SystemItem) WHERE s.id = $0 RETURN s";
+    public SystemItem findById(String id) throws EntityNotFoundException {
+        String query = "MATCH (s:SystemItem) " +
+                "WHERE s.id = $0 " +
+                "RETURN s.type, s.id, s.date, s.url, s.size, s.parentId";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(query)) {
             log.info("The connection was successful");
             stmt.setString(0, id);
             try (ResultSet rs = stmt.executeQuery()) {
-                // Todo: выбросить исключение если ничего не нашли
-                SystemItem systemItem = new SystemItem();
-                systemItem.setSystemItemType(SystemItemType.valueOf(rs.getString("s.type")));
-                systemItem.setId(rs.getString("s.id"));
-                systemItem.setDate(LocalDateTime.parse(rs.getString("s.date")));
-                systemItem.setUrl(rs.getString("s.url"));
-                systemItem.setSize(Integer.valueOf(rs.getString("s.size")));
-                return Optional.of(systemItem);
+                if (rs.next()) {
+                    SystemItem systemItem = new SystemItem();
+                    systemItem.setSystemItemType(SystemItemType.valueOf(rs.getString("s.type")));
+                    systemItem.setId(rs.getString("s.id"));
+                    systemItem.setDate(LocalDateTime.parse(rs.getString("s.date")));
+                    systemItem.setUrl(rs.getString("s.url"));
+                    systemItem.setSize(Integer.valueOf(rs.getString("s.size")));
+                    systemItem.setParentId(rs.getString("s.parentId"));
+                    return systemItem;
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        throw new EntityNotFoundException(id);
     }
 
     @Override
@@ -82,9 +86,12 @@ public class SystemItemDao extends Dao<SystemItem> {
         }
         // Если родитель уже в базе
         if (systemItem.getParentId() != null) {
-            Optional<SystemItem> optionalParent = findById(systemItem.getParentId());
-            if (optionalParent.isPresent()) {
-                SystemItem parent = optionalParent.get();
+            SystemItem parent = null;
+            try {
+                parent = findById(systemItem.getParentId());
+            } catch (EntityNotFoundException ignore) {
+            }
+            if (parent != null) {
                 createRelationship(systemItem, parent);
             }
         }
@@ -111,9 +118,12 @@ public class SystemItemDao extends Dao<SystemItem> {
         // Перебираем элементы и связываем их с родителями, если родители находятся в базе
         for (SystemItem systemItem : systemItems) {
             if (systemItem.getParentId() != null) {
-                Optional<SystemItem> optionalParent = findById(systemItem.getParentId());
-                if (optionalParent.isPresent()) {
-                    SystemItem parent = optionalParent.get();
+                SystemItem parent = null;
+                try {
+                    parent = findById(systemItem.getParentId());
+                } catch (EntityNotFoundException ignore) {
+                }
+                if (parent != null) {
                     createRelationship(systemItem, parent);
                 }
             }

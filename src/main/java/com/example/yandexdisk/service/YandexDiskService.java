@@ -3,6 +3,7 @@ package com.example.yandexdisk.service;
 import com.example.yandexdisk.dao.SystemItemDao;
 import com.example.yandexdisk.dto.SystemItemImport;
 import com.example.yandexdisk.dto.request.SystemItemImportRequest;
+import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.exception.ValidationException;
 import com.example.yandexdisk.model.SystemItem;
 import com.example.yandexdisk.model.SystemItemType;
@@ -46,7 +47,7 @@ public class YandexDiskService {
 
     }
 
-    public void handleSystemItemGetRequest(String id) {
+    public void handleSystemItemGetRequest(String id) throws EntityNotFoundException {
         repository.findById(id);
     }
 
