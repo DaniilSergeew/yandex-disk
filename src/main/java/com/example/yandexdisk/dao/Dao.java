@@ -1,13 +1,14 @@
 package com.example.yandexdisk.dao;
 
+import com.example.yandexdisk.exception.EntityNotFoundException;
+
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Абстрактный класс с CRUD методами
  */
 public abstract class Dao<T> {
-    public abstract Optional<T> findById(String id);
+    public abstract T findById(String id) throws EntityNotFoundException;
 
     abstract List<T> getAllById();
 
