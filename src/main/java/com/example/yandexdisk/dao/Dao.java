@@ -14,7 +14,7 @@ public abstract class Dao<T> {
 
     public abstract void save(T t);
 
-    public abstract void saveAll(Collection<T> t);
+    public abstract void saveAll(List<T> t);
 
     public abstract void update(T t);
 
