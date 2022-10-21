@@ -16,6 +16,7 @@ public class SystemItemImport {
 
     private String parentId;
 
+    @NotNull
     private SystemItemType type;
 
     private Integer size;
