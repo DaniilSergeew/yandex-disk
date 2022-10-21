@@ -10,9 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Класс, отвечающий за логику обработки запросов.
@@ -27,8 +25,8 @@ public class YandexDiskService {
 
     public void handleSystemItemImportRequest(SystemItemImportRequest request) throws ValidationException {
         systemItemImportRequestIsValid(request);
+        List<SystemItem> systemItems = new ArrayList<>();
         for (SystemItemImport systemItemImport : request.getItems()) {
-            // Вытаскиваем каждый systemItem, ставим ему дату из запроса и сохраняем
             SystemItem systemItem = SystemItem.builder()
                     .id(systemItemImport.getId())
                     .url(systemItemImport.getUrl())
@@ -37,11 +35,11 @@ public class YandexDiskService {
                     .systemItemType(systemItemImport.getType())
                     .size(systemItemImport.getSize())
                     .build();
-
-            log.info("Trying to save systemItem with id {}", systemItem.getId());
-            repository.save(systemItem);
-            log.info("Save systemItem with id {} was successful", systemItem.getId());
+            systemItems.add(systemItem);
         }
+        log.info("Trying to save systemItems from date: {}", request.getUpdateDate());
+        repository.saveAll(systemItems);
+        log.info("Save systemItem from date: {} was successful", request.getUpdateDate());
     }
 
     public void handleSystemItemDeleteRequest(String id) {
