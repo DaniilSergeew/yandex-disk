@@ -1,6 +1,7 @@
 package com.example.yandexdisk.controller;
 
 import com.example.yandexdisk.dto.request.SystemItemImportRequest;
+import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.exception.ValidationException;
 import com.example.yandexdisk.service.api.YandexDiskApiService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,7 +43,7 @@ public class YandexDiskController {
             description = "При получении информации о папке также предоставляется информация о её дочерних элементах."
     )
     @GetMapping("nodes/{id}")
-    public void getNodesById(@PathVariable String id) {
+    public void getNodesById(@PathVariable String id) throws EntityNotFoundException {
         service.getSystemItemsById(id);
     }
 
