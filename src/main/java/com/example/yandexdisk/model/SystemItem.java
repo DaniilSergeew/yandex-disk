@@ -20,7 +20,7 @@ public class SystemItem {
 
     private LocalDateTime date;
 
-    private SystemItemType systemItemType;
+    private SystemItemType type;
 
     private Integer size;
 }
