@@ -105,16 +105,15 @@ public class YandexDiskService {
                     log.error("SystemItemImport ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
                             systemItemImport.getParentId());
                     throw new ValidationException("SystemItemImport Parent Id Exception");
-                } else {
-                    try {
-                        SystemItem parentFromRepository = repository.findById(systemItemImport.getParentId());
-                        if (parentFromRepository.getType() == SystemItemType.FILE) {
-                            log.error("SystemItemImport ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
-                                    systemItemImport.getParentId());
-                            throw new ValidationException("SystemItemImport Parent Id Exception");
-                        }
-                    } catch (EntityNotFoundException ignore) {
+                }
+                try {
+                    SystemItem parentFromRepository = repository.findById(systemItemImport.getParentId());
+                    if (parentFromRepository.getType() == SystemItemType.FILE) {
+                        log.error("SystemItemImport ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
+                                systemItemImport.getParentId());
+                        throw new ValidationException("SystemItemImport Parent Id Exception");
                     }
+                } catch (EntityNotFoundException ignore) {
                 }
             }
         }

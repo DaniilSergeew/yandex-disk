@@ -14,6 +14,7 @@ import java.util.List;
  * Класс, реализующий crud операции с БД
  */
 
+@SuppressWarnings("SqlNoDataSourceInspection")
 @Slf4j
 @Component
 public class SystemItemDao extends Dao<SystemItem> {
@@ -25,6 +26,10 @@ public class SystemItemDao extends Dao<SystemItem> {
         return DriverManager.getConnection(path, user, password);
     }
 
+    /**
+     *
+     * @return сущность из БД по ее id
+     */
     @Override
     public SystemItem findById(String id) throws EntityNotFoundException {
         String query = "MATCH (s:SystemItem) " +
@@ -38,7 +43,7 @@ public class SystemItemDao extends Dao<SystemItem> {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     SystemItem systemItem = new SystemItem();
-                    systemItem.setSystemItemType(SystemItemType.valueOf(rs.getString("s.type")));
+                    systemItem.setType(SystemItemType.valueOf(rs.getString("s.type")));
                     systemItem.setId(rs.getString("s.id"));
                     systemItem.setDate(LocalDateTime.parse(rs.getString("s.date")));
                     systemItem.setUrl(rs.getString("s.url"));
@@ -58,8 +63,6 @@ public class SystemItemDao extends Dao<SystemItem> {
         return null;
     }
 
-    // Todo: подумать как это все можно сломать
-
     /**
      * Сохраняет сущность в БД.
      * Создает двухстороннюю связь родитель-ребенок, если родитель тот есть в БД
@@ -72,7 +75,7 @@ public class SystemItemDao extends Dao<SystemItem> {
              PreparedStatement stmt = con.prepareStatement(query)) {
             log.info("The connection was successful");
 
-            stmt.setString(0, systemItem.getSystemItemType().toString());
+            stmt.setString(0, systemItem.getType().toString());
             stmt.setString(1, systemItem.getId());
             stmt.setString(2, systemItem.getUrl());
             stmt.setString(3, systemItem.getDate().toString());
@@ -140,7 +143,7 @@ public class SystemItemDao extends Dao<SystemItem> {
             // add type
             query.append("(s:SystemItem {");
             query.append("type: ");
-            query.append("\"").append(curr.getSystemItemType()).append("\"").append(", ");
+            query.append("\"").append(curr.getType()).append("\"").append(", ");
             // add id
             query.append("id: ");
             query.append("\"").append(curr.getId()).append("\"").append(", ");
@@ -178,11 +181,11 @@ public class SystemItemDao extends Dao<SystemItem> {
      * @param parent родитель, уже имеющийся в БД
      */
     private void createRelationship(SystemItem child, SystemItem parent) {
-        String query = "MATCH (child:SystemItem), (parent:SystemItem)  \n" +
-                "WHERE child.UUID = $0 AND parent.UUID = $1" +
-                "CREATE (child)-[:child]->(parent),\n" +
-                "(parent)-[:parent]->(child)\n" +
-                "RETURN child,parent";
+        String query = """
+                MATCH (child:SystemItem), (parent:SystemItem) \s
+                WHERE child.UUID = $0 AND parent.UUID = $1CREATE (child)-[:child]->(parent),
+                (parent)-[:parent]->(child)
+                RETURN child,parent""";
 
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
