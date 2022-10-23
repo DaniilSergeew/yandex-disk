@@ -20,7 +20,7 @@ public abstract class GraphDao<T> {
 
     public abstract void findAll();
 
-    public abstract Optional<SystemItem> findById(String id) throws EntityNotFoundException, IllegalArgumentException;
+    public abstract Optional<SystemItem> findById(String id) throws IllegalArgumentException;
 
     abstract List<T> findAllById();
 
