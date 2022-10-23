@@ -11,13 +11,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Класс, реализующий crud операции с БД
+ * Класс, реализующий crud операции с графовой БД
  */
 
-@SuppressWarnings("SqlNoDataSourceInspection")
+@SuppressWarnings({"SqlNoDataSourceInspection", "SqlDialectInspection"})
 @Slf4j
 @Component
-public class SystemItemDao extends Dao<SystemItem> {
+public class SystemItemDao extends GraphDao<SystemItem> {
 
     private Connection getConnection() throws SQLException {
         String path = "jdbc:neo4j:bolt://localhost:7687";
@@ -26,8 +26,42 @@ public class SystemItemDao extends Dao<SystemItem> {
         return DriverManager.getConnection(path, user, password);
     }
 
+    @Override
+    public int count() {
+        return 0;
+    }
+
+    @Override
+    public void deleteAll() {
+        String query = "MATCH (n)\n" +
+                "DETACH DELETE n";
+        log.info("Trying to connect to the database...");
+        try (Connection con = getConnection();
+             PreparedStatement stmt = con.prepareStatement(query)) {
+            log.info("Trying to execute the query to delete all nodes...");
+            stmt.executeUpdate();
+            log.info("The query is successfully executed");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void deleteAllByParentId(String id) {
+
+    }
+
+    @Override
+    public boolean existsById(String id) {
+        return false;
+    }
+
+    @Override
+    public void findAll() {
+
+    }
+
     /**
-     *
      * @return сущность из БД по ее id
      */
     @Override
@@ -67,7 +101,7 @@ public class SystemItemDao extends Dao<SystemItem> {
     }
 
     @Override
-    public List<SystemItem> getAllById() {
+    List<SystemItem> findAllById() {
         return null;
     }
 
@@ -177,16 +211,6 @@ public class SystemItemDao extends Dao<SystemItem> {
         return query.toString();
     }
 
-    @Override
-    public void update(SystemItem systemItem) {
-
-    }
-
-    @Override
-    public void deleteById(SystemItem systemItem) {
-
-    }
-
     /**
      * Создает двухстороннюю связь родитель-ребенок в БД
      *
@@ -198,8 +222,7 @@ public class SystemItemDao extends Dao<SystemItem> {
                 MATCH (child:SystemItem), (parent:SystemItem) \s
                 WHERE child.id = $0 AND parent.id = $1
                 CREATE (child)-[:child]->(parent),
-                (parent)-[:parent]->(child)
-                RETURN child,parent""";
+                (parent)-[:parent]->(child)""";
 
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
