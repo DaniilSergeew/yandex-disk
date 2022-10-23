@@ -39,7 +39,9 @@ public class SystemItemDao extends Dao<SystemItem> {
         try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(query)) {
             log.info("The connection was successful");
+            log.info("Trying to execute the query to find SystemItem with id {}...", id);
             stmt.setString(0, id);
+            log.info("The query is successfully executed");
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     SystemItem systemItem = new SystemItem();
@@ -47,14 +49,20 @@ public class SystemItemDao extends Dao<SystemItem> {
                     systemItem.setId(rs.getString("s.id"));
                     systemItem.setDate(LocalDateTime.parse(rs.getString("s.date")));
                     systemItem.setUrl(rs.getString("s.url"));
-                    systemItem.setSize(Integer.valueOf(rs.getString("s.size")));
+                    try {
+                        systemItem.setSize(Integer.valueOf(rs.getString("s.size")));
+                    } catch (NumberFormatException e) {
+                        systemItem.setSize(null);
+                    }
                     systemItem.setParentId(rs.getString("s.parentId"));
+                    log.info("Entity is successfully founded");
                     return systemItem;
                 }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        log.info("Entity not found");
         throw new EntityNotFoundException(id);
     }
 
@@ -140,19 +148,24 @@ public class SystemItemDao extends Dao<SystemItem> {
         StringBuilder query = new StringBuilder("CREATE ");
         for (int i = 0; i < systemItems.size(); i++) {
             SystemItem curr = systemItems.get(i);
-            // add type
-            query.append("(s:SystemItem {");
-            query.append("type: ");
-            query.append("\"").append(curr.getType()).append("\"").append(", ");
+            query.append("(s");
+            query.append(i);
+            query.append(":SystemItem {");
             // add id
             query.append("id: ");
             query.append("\"").append(curr.getId()).append("\"").append(", ");
             // add url
             query.append("url: ");
             query.append("\"").append(curr.getUrl()).append("\"").append(", ");
+            // add parentId
+            query.append("parentId: ");
+            query.append("\"").append(curr.getParentId()).append("\"").append(", ");
             // add date
             query.append("date: ");
             query.append("\"").append(curr.getDate()).append("\"").append(", ");
+            // add type
+            query.append("type: ");
+            query.append("\"").append(curr.getType()).append("\"").append(", ");
             // add size
             query.append("size: ");
             query.append("\"").append(curr.getSize()).append("\"");
@@ -183,7 +196,8 @@ public class SystemItemDao extends Dao<SystemItem> {
     private void createRelationship(SystemItem child, SystemItem parent) {
         String query = """
                 MATCH (child:SystemItem), (parent:SystemItem) \s
-                WHERE child.UUID = $0 AND parent.UUID = $1CREATE (child)-[:child]->(parent),
+                WHERE child.id = $0 AND parent.id = $1
+                CREATE (child)-[:child]->(parent),
                 (parent)-[:parent]->(child)
                 RETURN child,parent""";
 
