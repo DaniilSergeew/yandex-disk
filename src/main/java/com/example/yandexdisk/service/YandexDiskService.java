@@ -3,7 +3,6 @@ package com.example.yandexdisk.service;
 import com.example.yandexdisk.dao.SystemItemDao;
 import com.example.yandexdisk.dto.SystemItemImport;
 import com.example.yandexdisk.dto.request.SystemItemImportRequest;
-import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.exception.ValidationException;
 import com.example.yandexdisk.model.SystemItem;
 import com.example.yandexdisk.model.SystemItemType;
@@ -47,7 +46,7 @@ public class YandexDiskService {
 
     }
 
-    public void handleSystemItemGetRequest(String id) throws EntityNotFoundException {
+    public void handleSystemItemGetRequest(String id) {
         repository.findById(id);
     }
 
@@ -107,15 +106,14 @@ public class YandexDiskService {
                             systemItemImport.getParentId());
                     throw new ValidationException("SystemItemImport Parent Id Exception");
                 }
-                try {
-                    SystemItem parentFromRepository = repository.findById(systemItemImport.getParentId());
-                    if (parentFromRepository.getType() == SystemItemType.FILE) {
-                        log.error("SystemItemImport ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
-                                systemItemImport.getParentId());
-                        throw new ValidationException("SystemItemImport Parent Id Exception");
-                    }
-                } catch (EntityNotFoundException ignore) {
+
+                Optional<SystemItem> parentFromRepository = repository.findById(systemItemImport.getParentId());
+                if (parentFromRepository.isPresent() && parentFromRepository.get().getType() == SystemItemType.FILE) {
+                    log.error("SystemItemImport ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
+                            systemItemImport.getParentId());
+                    throw new ValidationException("SystemItemImport Parent Id Exception");
                 }
+
             }
         }
     }

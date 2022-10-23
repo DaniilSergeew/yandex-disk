@@ -1,6 +1,5 @@
 package com.example.yandexdisk.dao;
 
-import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.model.SystemItem;
 import com.example.yandexdisk.model.SystemItemType;
 import lombok.extern.slf4j.Slf4j;
@@ -9,12 +8,12 @@ import org.springframework.stereotype.Component;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Класс, реализующий crud операции с графовой БД
  */
 
-@SuppressWarnings({"SqlNoDataSourceInspection", "SqlDialectInspection"})
 @Slf4j
 @Component
 public class SystemItemDao extends GraphDao<SystemItem> {
@@ -33,8 +32,7 @@ public class SystemItemDao extends GraphDao<SystemItem> {
 
     @Override
     public void deleteAll() {
-        String query = "MATCH (n)\n" +
-                "DETACH DELETE n";
+        String query = "MATCH (n) DETACH DELETE n";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(query)) {
@@ -47,13 +45,19 @@ public class SystemItemDao extends GraphDao<SystemItem> {
     }
 
     @Override
-    public void deleteAllByParentId(String id) {
-
+    public void deleteAllByParentId(String id) throws IllegalArgumentException {
+        if (id == null) {
+            throw new IllegalArgumentException();
+        }
     }
 
     @Override
-    public boolean existsById(String id) {
-        return false;
+    public boolean existsById(String id) throws IllegalArgumentException {
+        if (id == null) {
+            throw new IllegalArgumentException();
+        }
+        Optional<SystemItem> optionalSystemItem = findById(id);
+        return optionalSystemItem.isPresent();
     }
 
     @Override
@@ -65,7 +69,10 @@ public class SystemItemDao extends GraphDao<SystemItem> {
      * @return сущность из БД по ее id
      */
     @Override
-    public SystemItem findById(String id) throws EntityNotFoundException {
+    public Optional<SystemItem> findById(String id) throws IllegalArgumentException {
+        if (id == null) {
+            throw new IllegalArgumentException();
+        }
         String query = "MATCH (s:SystemItem) " +
                 "WHERE s.id = $0 " +
                 "RETURN s.type, s.id, s.date, s.url, s.size, s.parentId";
@@ -90,14 +97,14 @@ public class SystemItemDao extends GraphDao<SystemItem> {
                     }
                     systemItem.setParentId(rs.getString("s.parentId"));
                     log.info("Entity is successfully founded");
-                    return systemItem;
+                    return Optional.of(systemItem);
                 }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
         log.info("Entity not found");
-        throw new EntityNotFoundException(id);
+        return Optional.empty();
     }
 
     @Override
@@ -110,7 +117,10 @@ public class SystemItemDao extends GraphDao<SystemItem> {
      * Создает двухстороннюю связь родитель-ребенок, если родитель тот есть в БД
      */
     @Override
-    public void save(SystemItem systemItem) {
+    public void save(SystemItem systemItem) throws IllegalArgumentException {
+        if (systemItem == null) {
+            throw new IllegalArgumentException();
+        }
         String query = "CREATE (s:SystemItem {type: $0, id: $1, url: $2, date: $3, size: $4})";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
@@ -131,14 +141,8 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         }
         // Если родитель уже в базе
         if (systemItem.getParentId() != null) {
-            SystemItem parent = null;
-            try {
-                parent = findById(systemItem.getParentId());
-            } catch (EntityNotFoundException ignore) {
-            }
-            if (parent != null) {
-                createRelationship(systemItem, parent);
-            }
+            Optional<SystemItem> parent = findById(systemItem.getParentId());
+            parent.ifPresent(item -> createRelationship(systemItem, item));
         }
     }
 
@@ -147,7 +151,10 @@ public class SystemItemDao extends GraphDao<SystemItem> {
      * Создает двухсторонние связи родитель-ребенок в БД, если это возможно.
      */
     @Override
-    public void saveAll(List<SystemItem> systemItems) {
+    public void saveAll(List<SystemItem> systemItems) throws IllegalArgumentException {
+        if (systemItems == null) {
+            throw new IllegalArgumentException();
+        }
         // Создаем запрос к базе на сохранение и выполняем его
         String query = getSaveAllQuery(systemItems);
         log.info("Trying to connect to the database...");
@@ -163,14 +170,8 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         // Перебираем элементы и связываем их с родителями, если родители находятся в базе
         for (SystemItem systemItem : systemItems) {
             if (systemItem.getParentId() != null) {
-                SystemItem parent = null;
-                try {
-                    parent = findById(systemItem.getParentId());
-                } catch (EntityNotFoundException ignore) {
-                }
-                if (parent != null) {
-                    createRelationship(systemItem, parent);
-                }
+                Optional<SystemItem> parent = findById(systemItem.getParentId());
+                parent.ifPresent(item -> createRelationship(systemItem, item));
             }
         }
     }
@@ -178,7 +179,10 @@ public class SystemItemDao extends GraphDao<SystemItem> {
     /**
      * @return запрос на сохранение листа сущностей в БД без создания связей
      */
-    private String getSaveAllQuery(List<SystemItem> systemItems) {
+    private String getSaveAllQuery(List<SystemItem> systemItems) throws IllegalArgumentException {
+        if (systemItems == null) {
+            throw new IllegalArgumentException();
+        }
         StringBuilder query = new StringBuilder("CREATE ");
         for (int i = 0; i < systemItems.size(); i++) {
             SystemItem curr = systemItems.get(i);
@@ -217,7 +221,10 @@ public class SystemItemDao extends GraphDao<SystemItem> {
      * @param child  ребенок, уже имеющийся в БД
      * @param parent родитель, уже имеющийся в БД
      */
-    private void createRelationship(SystemItem child, SystemItem parent) {
+    private void createRelationship(SystemItem child, SystemItem parent) throws IllegalArgumentException {
+        if (child == null || parent == null) {
+            throw new IllegalArgumentException();
+        }
         String query = """
                 MATCH (child:SystemItem), (parent:SystemItem) \s
                 WHERE child.id = $0 AND parent.id = $1
