@@ -31,4 +31,5 @@ public class YandexDiskErrorHandlingController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
     // Todo: добавить обработчик для sql exception
+    // Todo: HttpMessageNotReadableException
 }

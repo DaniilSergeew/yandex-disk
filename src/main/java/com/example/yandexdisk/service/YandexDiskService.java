@@ -58,6 +58,7 @@ public class YandexDiskService {
      */
     private void systemItemImportRequestIsValid(SystemItemImportRequest request) throws ValidationException {
         // Todo: проаннотировать поля @NotNull и написать handler
+        // Todo: id == parentId?
         checkUniqueId(request);
         checkTypeOfParent(request);
         checkUrlOfFolder(request);
