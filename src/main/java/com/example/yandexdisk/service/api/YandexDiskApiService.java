@@ -22,7 +22,7 @@ public class YandexDiskApiService {
 
     public void deleteSystemItemsById(String id) {
         log.info("Trying to delete SystemItems by id: {}...", id);
-        service.handleSystemItemDeleteRequest(id);
+        service.handleSystemItemsDeleteRequest(id);
         log.info("Deleting SystemItems by id: {} was successful", id);
     }
 

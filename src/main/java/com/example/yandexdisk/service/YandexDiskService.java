@@ -43,7 +43,7 @@ public class YandexDiskService {
         log.info("Save systemItem from date: {} was successful", request.getUpdateDate());
     }
 
-    public void handleSystemItemDeleteRequest(String id) {
+    public void handleSystemItemsDeleteRequest(String id) {
 
     }
 
