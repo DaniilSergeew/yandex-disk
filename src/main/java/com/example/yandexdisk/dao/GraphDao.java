@@ -1,5 +1,6 @@
 package com.example.yandexdisk.dao;
 
+import com.example.yandexdisk.dto.SystemItemExport;
 import com.example.yandexdisk.model.SystemItem;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public abstract class GraphDao<T> {
 
     public abstract Optional<SystemItem> findById(String id) throws IllegalArgumentException;
 
-    public abstract List<T> findAllById(String id) throws IllegalArgumentException;
+    public abstract Optional<SystemItemExport> findAllById(String id) throws IllegalArgumentException;
 
     public abstract void save(T t) throws IllegalArgumentException;
 
