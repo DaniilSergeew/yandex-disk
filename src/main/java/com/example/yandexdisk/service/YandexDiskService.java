@@ -59,6 +59,7 @@ public class YandexDiskService {
         // Todo: проаннотировать поля @NotNull и написать handler
         // Todo: id == parentId?
         checkUniqueId(request);
+        // Todo: а если родителя нет?
         checkTypeOfParent(request);
         checkUrlOfFolder(request);
         checkUrlSize(request);
@@ -125,7 +126,7 @@ public class YandexDiskService {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getType() == SystemItemType.FOLDER) {
                 if (systemItemImport.getUrl() != null) {
-                    log.error("SystemItemImport with UUID: {} url for FOLDER should be NULL", systemItemImport.getId());
+                    log.error("SystemItemImport with id: {} url for FOLDER should be NULL", systemItemImport.getId());
                     throw new ValidationException("SystemItemImport url Exception for FOLDER");
                 }
             }
@@ -139,7 +140,7 @@ public class YandexDiskService {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getType() == SystemItemType.FILE &&
                     systemItemImport.getUrl() != null && systemItemImport.getUrl().length() > 255) {
-                log.error("SystemItemImport with UUID: {} url length should be less or equal than 255", systemItemImport.getId());
+                log.error("SystemItemImport with id: {} url length should be less or equal than 255", systemItemImport.getId());
                 throw new ValidationException("SystemItemImport url length Exception");
             }
         }
@@ -152,7 +153,7 @@ public class YandexDiskService {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getType() == SystemItemType.FOLDER &&
                     systemItemImport.getSize() != null) {
-                log.error("SystemItemImport with UUID: {} size for FOLDER should be NULL", systemItemImport.getId());
+                log.error("SystemItemImport with id: {} size for FOLDER should be NULL", systemItemImport.getId());
                 throw new ValidationException("SystemItemImport FOLDER size Exception");
             }
         }
@@ -165,7 +166,7 @@ public class YandexDiskService {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getType() == SystemItemType.FILE &&
                     systemItemImport.getSize() <= 0) {
-                log.error("SystemItemImport with UUID: {} size for Folder should be more than 0", systemItemImport.getId());
+                log.error("SystemItemImport with id: {} size for Folder should be more than 0", systemItemImport.getId());
                 throw new ValidationException("SystemItemImport FILE size Exception");
             }
         }
