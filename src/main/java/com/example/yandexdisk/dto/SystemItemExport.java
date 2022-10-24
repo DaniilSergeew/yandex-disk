@@ -27,5 +27,4 @@ public class SystemItemExport {
     private Integer size;
 
     List<SystemItemExport> children;
-
 }
