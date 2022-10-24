@@ -72,8 +72,7 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         if (id == null) {
             throw new IllegalArgumentException();
         }
-        Optional<SystemItem> optionalSystemItem = findById(id);
-        return optionalSystemItem.isPresent();
+        return findById(id).isPresent();
     }
 
     @Override
@@ -124,7 +123,7 @@ public class SystemItemDao extends GraphDao<SystemItem> {
     }
 
     @Override
-    List<SystemItem> findAllById() {
+    public List<SystemItem> findAllById() {
         return null;
     }
 
