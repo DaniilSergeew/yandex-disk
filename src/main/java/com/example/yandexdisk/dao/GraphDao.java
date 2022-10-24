@@ -1,6 +1,5 @@
 package com.example.yandexdisk.dao;
 
-import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.model.SystemItem;
 
 import java.util.List;
@@ -22,7 +21,7 @@ public abstract class GraphDao<T> {
 
     public abstract Optional<SystemItem> findById(String id) throws IllegalArgumentException;
 
-    abstract List<T> findAllById();
+    public abstract List<T> findAllById();
 
     public abstract void save(T t) throws IllegalArgumentException;
 
