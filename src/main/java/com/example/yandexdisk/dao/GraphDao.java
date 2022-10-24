@@ -21,7 +21,7 @@ public abstract class GraphDao<T> {
 
     public abstract Optional<SystemItem> findById(String id) throws IllegalArgumentException;
 
-    public abstract List<T> findAllById();
+    public abstract List<T> findAllById(String id) throws IllegalArgumentException;
 
     public abstract void save(T t) throws IllegalArgumentException;
 
