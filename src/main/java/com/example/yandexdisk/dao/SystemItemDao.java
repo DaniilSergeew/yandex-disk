@@ -25,9 +25,25 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         return DriverManager.getConnection(path, user, password);
     }
 
+    /**
+     * @return количество узлов SystemItem в БД
+     */
     @Override
     public int count() {
-        return 0;
+        String query = "MATCH (n:SystemItem) RETURN count(*) as counter";
+        log.info("Trying to connect to the database...");
+        try (Connection con = getConnection();
+             PreparedStatement stmt = con.prepareStatement(query)) {
+            log.info("Trying to execute the query to find count of nodes...");
+            stmt.executeQuery();
+            log.info("The query is successfully executed");
+            try (ResultSet rs = stmt.executeQuery()) {
+                rs.next();
+                return Integer.parseInt(rs.getString("counter"));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
