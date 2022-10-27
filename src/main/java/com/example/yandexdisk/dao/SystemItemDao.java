@@ -1,5 +1,6 @@
 package com.example.yandexdisk.dao;
 
+import com.example.yandexdisk.dto.SystemItemExport;
 import com.example.yandexdisk.model.SystemItem;
 import com.example.yandexdisk.model.SystemItemType;
 import lombok.extern.slf4j.Slf4j;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +32,9 @@ public class SystemItemDao extends GraphDao<SystemItem> {
      */
     @Override
     public int count() {
-        String query = "MATCH (n:SystemItem) RETURN count(*) as counter";
+        String query = """
+                MATCH (n:SystemItem)
+                RETURN count(*) as counter""";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(query)) {
@@ -46,6 +50,9 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         }
     }
 
+    /**
+     * Удаляет все элементы из БД
+     */
     @Override
     public void deleteAll() {
         String query = "MATCH (n) DETACH DELETE n";
@@ -87,10 +94,11 @@ public class SystemItemDao extends GraphDao<SystemItem> {
     public Optional<SystemItem> findById(String id) throws IllegalArgumentException {
         if (id == null) {
             throw new IllegalArgumentException();
-        }
-        String query = "MATCH (s:SystemItem) " +
-                "WHERE s.id = $0 " +
-                "RETURN s.type, s.id, s.date, s.url, s.size, s.parentId";
+        } // Todo: поменять местами поля в запросе и создании сущности
+        String query = """
+                MATCH (s:SystemItem)
+                WHERE s.id = $0
+                RETURN s.type, s.id, s.date, s.url, s.size, s.parentId""";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(query)) {
@@ -122,9 +130,59 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         return Optional.empty();
     }
 
+    // Todo: перепроверь суть алгоритма на бумажке и можно начинать тестить
     @Override
-    public List<SystemItem> findAllById() {
-        return null;
+    public Optional<SystemItemExport> findAllById(String id) throws IllegalArgumentException {
+        if (id == null) {
+            throw new IllegalArgumentException();
+        }
+        // Находим корень и если его не существует возвращаем Optional.empty()
+        Optional<SystemItem> optionalRoot = findById(id);
+        if (optionalRoot.isEmpty()) {
+            return Optional.empty();
+        }
+        // создаем корень SystemItemExport
+        SystemItem rootSystemItem = optionalRoot.get();
+        SystemItemExport globalRoot = SystemItemExport.builder()
+                .id(id)
+                .url(rootSystemItem.getUrl())
+                .parentId(rootSystemItem.getParentId())
+                .date(rootSystemItem.getDate())
+                .type(rootSystemItem.getType())
+                .size(rootSystemItem.getSize())
+                .build();
+        // если рутом является файл, то просто возвращаем его
+        if (globalRoot.getType() == SystemItemType.FILE) {
+            return Optional.of(globalRoot);
+        }
+        List<SystemItemExport> up = new ArrayList<>();
+        up.add(globalRoot);
+        List<SystemItemExport> middle = new ArrayList<>(findAllChildrenById(id));
+        globalRoot.setChildren(middle);
+        while (true) {
+            // Создаем массив будущих внуков
+            List<SystemItemExport> grandChildren = new ArrayList<>();
+            // Перебираем верхний уровень
+            for (SystemItemExport upItem : up) {
+                // Перебираем средний уровень
+                for (SystemItemExport downItem : middle) {
+                    // Добавляем детей среднего уровня в массив внуков
+                    grandChildren.addAll(findAllChildrenById(downItem.getId()));
+                    // Если мэтчатся родитель и ребенок, то добавляем ребенка родителю
+                    if (downItem.getParentId().equals(upItem.getId())) {
+                        upItem.getChildren().add(downItem);
+                    }
+                }
+            }
+            up = middle;
+            middle = grandChildren;
+            // Надо чтобы хотя бы у кого то на самом нижнем уровне был ребенок
+            for (SystemItemExport grandson : grandChildren) {
+                if (findAllChildrenById(grandson.getId()).isEmpty()) {
+                    return Optional.of(globalRoot);
+                }
+            }
+        }
     }
 
     /**
@@ -241,7 +299,7 @@ public class SystemItemDao extends GraphDao<SystemItem> {
             throw new IllegalArgumentException();
         }
         String query = """
-                MATCH (child:SystemItem), (parent:SystemItem) \s
+                MATCH (child:SystemItem), (parent:SystemItem)
                 WHERE child.id = $0 AND parent.id = $1
                 CREATE (child)-[:child]->(parent),
                 (parent)-[:parent]->(child)""";
@@ -261,6 +319,42 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private List<SystemItemExport> findAllChildrenById(String id) {
+        List<SystemItemExport> allChildren = new ArrayList<>();
+        String query = """
+                MATCH (s:SystemItem {id: $0})-[:parent]->(c:SystemItem)
+                RETURN c.id, c.url, c.parentId, c.date, c.type, c.size""";
+        try (Connection con = getConnection();
+             PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setString(0, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    SystemItemExport current = new SystemItemExport();
+                    current.setId(rs.getString("s.id"));
+                    current.setUrl(rs.getString("s.url"));
+                    current.setParentId(rs.getString("s.parentId"));
+                    current.setDate(LocalDateTime.parse(rs.getString("s.date")));
+                    current.setType(SystemItemType.valueOf(rs.getString("s.type")));
+                    try {
+                        current.setSize(Integer.valueOf(rs.getString("s.size")));
+                    } catch (NumberFormatException e) {
+                        current.setSize(null);
+                    }
+                    // Для файлов childer = null
+                    if (current.getType() == SystemItemType.FILE) {
+                        current.setChildren(null);
+                    } else {
+                        current.setChildren(new ArrayList<>());
+                    }
+                    allChildren.add(current);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return allChildren;
     }
 
 }
