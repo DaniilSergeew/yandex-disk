@@ -23,6 +23,9 @@ import java.util.*;
 public class YandexDiskService {
     private final SystemItemDao repository;
 
+    /**
+     * path: /imports
+     */
     public void handleSystemItemImportRequest(SystemItemImportRequest request) throws ValidationException {
         systemItemImportRequestIsValid(request);
         List<SystemItem> systemItems = new ArrayList<>();
@@ -37,15 +40,19 @@ public class YandexDiskService {
                     .build();
             systemItems.add(systemItem);
         }
-        log.info("Trying to save systemItems from date: {}", request.getUpdateDate());
         repository.saveAll(systemItems);
-        log.info("Save systemItem from date: {} was successful", request.getUpdateDate());
     }
 
+    /**
+     * path: /delete/{id}
+     */
     public void handleSystemItemsDeleteRequest(String id) {
 
     }
 
+    /**
+     * path: /nodes/{id}
+     */
     public void handleSystemItemGetRequest(String id) {
         repository.findById(id);
     }
@@ -75,7 +82,7 @@ public class YandexDiskService {
         Set<String> ids = new HashSet<>();
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (ids.contains(systemItemImport.getId()))
-                throw new ValidationException("ShopUnitImport ID shouldn't be repeated");
+                throw new ValidationException("SystemItemImport ID shouldn't be repeated");
             else ids.add(systemItemImport.getId());
         }
     }
@@ -86,7 +93,8 @@ public class YandexDiskService {
     private void checkIdIsEmpty(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getId().isEmpty()) {
-                throw new ValidationException("ShopUnitImport ID shouldn't be empty");
+                log.error("SystemItemImport ID shouldn't be empty");
+                throw new ValidationException("SystemItemImport ID shouldn't be empty");
             }
         }
     }
@@ -103,14 +111,14 @@ public class YandexDiskService {
                         .filter(p -> p.getId().equals(systemItemImport.getParentId()))
                         .findFirst();
                 if (optionalParent.isPresent() && optionalParent.get().getType() == SystemItemType.FILE) {
-                    log.error("SystemItemImport ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
+                    log.error("SystemItemImport with ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
                             systemItemImport.getParentId());
                     throw new ValidationException("SystemItemImport Parent Id Exception");
                 }
 
                 Optional<SystemItem> parentFromRepository = repository.findById(systemItemImport.getParentId());
                 if (parentFromRepository.isPresent() && parentFromRepository.get().getType() == SystemItemType.FILE) {
-                    log.error("SystemItemImport ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
+                    log.error("SystemItemImport with ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
                             systemItemImport.getParentId());
                     throw new ValidationException("SystemItemImport Parent Id Exception");
                 }
