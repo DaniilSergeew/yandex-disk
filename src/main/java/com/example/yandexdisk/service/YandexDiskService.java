@@ -48,8 +48,8 @@ public class YandexDiskService {
     /**
      * path: /delete/{id}
      */
-    public void handleSystemItemsDeleteRequest(String id) {
-
+    public void handleSystemItemsDeleteRequest(String id) throws EntityNotFoundException {
+        repository.deleteAllByParentId(id);
     }
 
     /**

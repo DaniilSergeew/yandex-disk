@@ -51,7 +51,7 @@ public class YandexDiskController {
             @ApiResponse(responseCode = "500", description = "Unexpected error", content = @Content)
     })
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteSystemItems(@PathVariable String id) {
+    public ResponseEntity<?> deleteSystemItems(@PathVariable String id) throws EntityNotFoundException {
         service.deleteSystemItemsById(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }

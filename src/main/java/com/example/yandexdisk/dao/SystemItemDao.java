@@ -1,6 +1,7 @@
 package com.example.yandexdisk.dao;
 
 import com.example.yandexdisk.dto.SystemItemExport;
+import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.model.SystemItem;
 import com.example.yandexdisk.model.SystemItemType;
 import lombok.extern.slf4j.Slf4j;
@@ -69,9 +70,26 @@ public class SystemItemDao extends GraphDao<SystemItem> {
     }
 
     @Override
-    public void deleteAllByParentId(String id) throws IllegalArgumentException {
+    public void deleteAllByParentId(String id) throws IllegalArgumentException, EntityNotFoundException {
         if (id == null) {
             throw new IllegalArgumentException();
+        }
+        if (findById(id).isEmpty()) {
+            throw new EntityNotFoundException(id);
+        }
+        // Todo: разобраться с корректностью запроса
+        String query = """
+                MATCH path = (c:SystemItem)-[parent]->(cc:SystemItem)
+                WHERE c.id = "Ребенок1.3"
+                DETACH DELETE path""";
+        log.info("Trying to connect to the database...");
+        try (Connection con = getConnection();
+             PreparedStatement stmt = con.prepareStatement(query)) {
+            log.info("Trying to execute the query to delete nodes with root id: {}", id);
+            stmt.executeUpdate();
+            log.info("The query is successfully executed");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

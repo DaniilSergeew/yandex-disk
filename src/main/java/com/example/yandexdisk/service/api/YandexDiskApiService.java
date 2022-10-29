@@ -23,7 +23,7 @@ public class YandexDiskApiService {
         log.info("Save was successful");
     }
 
-    public void deleteSystemItemsById(String id) {
+    public void deleteSystemItemsById(String id) throws EntityNotFoundException {
         log.info("Trying to delete SystemItems by id: {}...", id);
         service.handleSystemItemsDeleteRequest(id);
         log.info("Deleting SystemItems by id: {} was successful", id);

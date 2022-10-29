@@ -15,7 +15,7 @@ public abstract class GraphDao<T> {
 
     public abstract void deleteAll();
 
-    public abstract void deleteAllByParentId(String id) throws IllegalArgumentException;
+    public abstract void deleteAllByParentId(String id) throws IllegalArgumentException, EntityNotFoundException;
 
     public abstract boolean existsById(String id) throws IllegalArgumentException;
 
