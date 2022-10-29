@@ -71,8 +71,6 @@ public class YandexDiskService {
      * @param request объект запроса
      */
     private void systemItemImportRequestIsValid(SystemItemImportRequest request) throws ValidationException {
-        // Todo: проаннотировать поля @NotNull и написать handler
-        // Todo: написать нормальные логи
         checkUniqueId(request);
         checkTypeOfParent(request);
         checkUrlOfFolder(request);
@@ -90,7 +88,7 @@ public class YandexDiskService {
         Set<String> ids = new HashSet<>();
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (ids.contains(systemItemImport.getId())) {
-                log.error("SystemItemImport ID is repeated");
+                log.error("SystemItemImport Id {} is repeated", systemItemImport.getId());
                 throw new ValidationException("SystemItemImport ID shouldn't be repeated");
             } else ids.add(systemItemImport.getId());
         }
@@ -99,7 +97,7 @@ public class YandexDiskService {
     private void checkIdEuqalsParentId(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getId().equals(systemItemImport.getParentId())) {
-                log.error("SystemItemImport ID euqals SystemItemImport parentId");
+                log.error("SystemItemImport with {} | euqals SystemItemImport parentId", systemItemImport.getId());
                 throw new ValidationException("SystemItemImport ID shouldn't be euqals SystemItemImport parentId");
             }
         }
@@ -111,7 +109,7 @@ public class YandexDiskService {
     private void checkIdIsEmpty(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getId().isEmpty()) {
-                log.error("SystemItemImport ID shouldn't be empty");
+                log.error("SystemItemImport id is empty");
                 throw new ValidationException("SystemItemImport ID shouldn't be empty");
             }
         }
@@ -122,23 +120,25 @@ public class YandexDiskService {
      */
     private void checkTypeOfParent(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
+            // Поиск по запросу
             if (systemItemImport.getParentId() != null) {
                 Optional<SystemItemImport> optionalParent = request
                         .getItems()
                         .stream()
                         .filter(p -> p.getId().equals(systemItemImport.getParentId()))
                         .findFirst();
+                // Поиск по БД
                 if (optionalParent.isPresent() && optionalParent.get().getType() == SystemItemType.FILE) {
-                    log.error("SystemItemImport with ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
+                    log.error("SystemItemImport with ParentId: {} | have a file parent",
                             systemItemImport.getParentId());
-                    throw new ValidationException("SystemItemImport Parent Id Exception");
+                    throw new ValidationException("SystemItemImport with ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER");
                 }
 
                 Optional<SystemItem> parentFromRepository = repository.findById(systemItemImport.getParentId());
                 if (parentFromRepository.isPresent() && parentFromRepository.get().getType() == SystemItemType.FILE) {
-                    log.error("SystemItemImport with ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER",
+                    log.error("SystemItemImport with ParentId: {} | have a file parent",
                             systemItemImport.getParentId());
-                    throw new ValidationException("SystemItemImport Parent Id Exception");
+                    throw new ValidationException("SystemItemImport with ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER");
                 }
 
             }
@@ -152,8 +152,8 @@ public class YandexDiskService {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getType() == SystemItemType.FOLDER) {
                 if (systemItemImport.getUrl() != null) {
-                    log.error("SystemItemImport with id: {} url for FOLDER should be NULL", systemItemImport.getId());
-                    throw new ValidationException("SystemItemImport url Exception for FOLDER");
+                    log.error("SystemItemImport with id: {} | url for FOLDER is NULL", systemItemImport.getId());
+                    throw new ValidationException("SystemItemImport with id: {} | url for FOLDER should be NULL");
                 }
             }
         }
@@ -166,8 +166,8 @@ public class YandexDiskService {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getType() == SystemItemType.FILE &&
                     systemItemImport.getUrl() != null && systemItemImport.getUrl().length() > 255) {
-                log.error("SystemItemImport with id: {} url length should be less or equal than 255", systemItemImport.getId());
-                throw new ValidationException("SystemItemImport url length Exception");
+                log.error("SystemItemImport with id: {} | url length dont less or equal than 255", systemItemImport.getId());
+                throw new ValidationException("SystemItemImport with id: {} | url length should be less or equal than 255");
             }
         }
     }
@@ -179,8 +179,8 @@ public class YandexDiskService {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getType() == SystemItemType.FOLDER &&
                     systemItemImport.getSize() != null) {
-                log.error("SystemItemImport with id: {} size for FOLDER should be NULL", systemItemImport.getId());
-                throw new ValidationException("SystemItemImport FOLDER size Exception");
+                log.error("SystemItemImport with id: {} | size for FOLDER is NULL", systemItemImport.getId());
+                throw new ValidationException("SystemItemImport with id: {} | size for FOLDER should be NULL");
             }
         }
     }
@@ -192,8 +192,8 @@ public class YandexDiskService {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getType() == SystemItemType.FILE &&
                     systemItemImport.getSize() <= 0) {
-                log.error("SystemItemImport with id: {} size for Folder should be more than 0", systemItemImport.getId());
-                throw new ValidationException("SystemItemImport FILE size Exception");
+                log.error("SystemItemImport with id: {} | Folder size less than 0", systemItemImport.getId());
+                throw new ValidationException("SystemItemImport with id: {} | size for Folder should be more than 0");
             }
         }
     }
