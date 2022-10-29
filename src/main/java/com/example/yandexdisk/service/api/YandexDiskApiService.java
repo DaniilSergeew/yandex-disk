@@ -1,11 +1,15 @@
 package com.example.yandexdisk.service.api;
 
+import com.example.yandexdisk.dto.SystemItemExport;
 import com.example.yandexdisk.dto.request.SystemItemImportRequest;
+import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.exception.ValidationException;
 import com.example.yandexdisk.service.YandexDiskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -25,10 +29,11 @@ public class YandexDiskApiService {
         log.info("Deleting SystemItems by id: {} was successful", id);
     }
 
-    public void getSystemItemsById(String id) {
-        log.info("Trying to get Sales List by id: {}...", id);
-        service.handleSystemItemGetRequest(id);
+    public SystemItemExport getSystemItemsById(String id) throws EntityNotFoundException {
+        log.info("Trying to get SystemItems by parentId: {}...", id);
+        SystemItemExport result = service.handleSystemItemGetRequest(id);
         log.info("Getting SystemItems by id: {} was successful", id);
+        return result;
     }
 
 }

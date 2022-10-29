@@ -11,9 +11,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Класс, реализующий crud операции с графовой БД
+ * Класс, реализующий CRUD операции с графовой БД
  */
 
 @Slf4j
@@ -28,7 +29,7 @@ public class SystemItemDao extends GraphDao<SystemItem> {
     }
 
     /**
-     * @return количество узлов SystemItem в БД
+     * @return количество экземпляров SystemItem в БД
      */
     @Override
     public int count() {
@@ -74,6 +75,9 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         }
     }
 
+    /**
+     * @return истину, в случае, если элемент с указанным id имеется в БД
+     */
     @Override
     public boolean existsById(String id) throws IllegalArgumentException {
         if (id == null) {
@@ -94,11 +98,11 @@ public class SystemItemDao extends GraphDao<SystemItem> {
     public Optional<SystemItem> findById(String id) throws IllegalArgumentException {
         if (id == null) {
             throw new IllegalArgumentException();
-        } // Todo: поменять местами поля в запросе и создании сущности
+        }
         String query = """
                 MATCH (s:SystemItem)
                 WHERE s.id = $0
-                RETURN s.type, s.id, s.date, s.url, s.size, s.parentId""";
+                RETURN s.id, s.url, s.parentId, s.date, s.type, s.size""";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(query)) {
@@ -109,16 +113,16 @@ public class SystemItemDao extends GraphDao<SystemItem> {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     SystemItem systemItem = new SystemItem();
-                    systemItem.setType(SystemItemType.valueOf(rs.getString("s.type")));
                     systemItem.setId(rs.getString("s.id"));
-                    systemItem.setDate(LocalDateTime.parse(rs.getString("s.date")));
                     systemItem.setUrl(rs.getString("s.url"));
+                    systemItem.setParentId(rs.getString("s.parentId"));
+                    systemItem.setDate(LocalDateTime.parse(rs.getString("s.date")));
+                    systemItem.setType(SystemItemType.valueOf(rs.getString("s.type")));
                     try {
                         systemItem.setSize(Integer.valueOf(rs.getString("s.size")));
                     } catch (NumberFormatException e) {
                         systemItem.setSize(null);
                     }
-                    systemItem.setParentId(rs.getString("s.parentId"));
                     log.info("Entity is successfully founded");
                     return Optional.of(systemItem);
                 }
@@ -130,7 +134,6 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         return Optional.empty();
     }
 
-    // Todo: перепроверь суть алгоритма на бумажке и можно начинать тестить
     @Override
     public Optional<SystemItemExport> findAllById(String id) throws IllegalArgumentException {
         if (id == null) {
@@ -155,33 +158,37 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         if (globalRoot.getType() == SystemItemType.FILE) {
             return Optional.of(globalRoot);
         }
-        List<SystemItemExport> up = new ArrayList<>();
+        // Создаем иерархию...
+        // Корень на текущей итерации
+        List<SystemItemExport> up = new CopyOnWriteArrayList<>();
         up.add(globalRoot);
-        List<SystemItemExport> middle = new ArrayList<>(findAllChildrenById(id));
-        globalRoot.setChildren(middle);
+        // Дети корня на текщей итерации
+        List<SystemItemExport> middle = new CopyOnWriteArrayList<>(findAllChildrenById(id));
+        globalRoot.setChildren(new CopyOnWriteArrayList<>());
+        // Внуки на текущей итерации
+        List<SystemItemExport> down = new CopyOnWriteArrayList<>();
+        // Цикл, отвечающйи за проход по "этажам"
         while (true) {
-            // Создаем массив будущих внуков
-            List<SystemItemExport> grandChildren = new ArrayList<>();
-            // Перебираем верхний уровень
+            // Перебор корней
             for (SystemItemExport upItem : up) {
-                // Перебираем средний уровень
-                for (SystemItemExport downItem : middle) {
-                    // Добавляем детей среднего уровня в массив внуков
-                    grandChildren.addAll(findAllChildrenById(downItem.getId()));
+                // Перебор детей каждого корня
+                for (SystemItemExport middleItem : middle) {
+                    // Сохраняем всех внуков в одном общем массиве
+                    down.addAll(findAllChildrenById(middleItem.getId()));
                     // Если мэтчатся родитель и ребенок, то добавляем ребенка родителю
-                    if (downItem.getParentId().equals(upItem.getId())) {
-                        upItem.getChildren().add(downItem);
+                    if (middleItem.getParentId().equals(upItem.getId())) {
+                        upItem.getChildren().add(middleItem);
                     }
                 }
             }
-            up = middle;
-            middle = grandChildren;
-            // Надо чтобы хотя бы у кого то на самом нижнем уровне был ребенок
-            for (SystemItemExport grandson : grandChildren) {
-                if (findAllChildrenById(grandson.getId()).isEmpty()) {
-                    return Optional.of(globalRoot);
-                }
+            // Условие выхода: отсутствие детей у среднего уровня, которого уже связали с родителями
+            if (down.isEmpty()) {
+                return Optional.of(globalRoot);
             }
+            // На следующей итерации к текущему среднему уровню добавятся текущие внуки, для этого сдвигаем уровни вниз
+            up = new CopyOnWriteArrayList<>(middle);
+            middle = new CopyOnWriteArrayList<>(down);
+            down.clear();
         }
     }
 
@@ -194,17 +201,18 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         if (systemItem == null) {
             throw new IllegalArgumentException();
         }
-        String query = "CREATE (s:SystemItem {type: $0, id: $1, url: $2, date: $3, size: $4})";
+        String query = "CREATE (s:SystemItem {id: $0, url: $1, parentId: $2, date: $3, type: $4, size: $5})";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(query)) {
             log.info("The connection was successful");
 
-            stmt.setString(0, systemItem.getType().toString());
-            stmt.setString(1, systemItem.getId());
-            stmt.setString(2, systemItem.getUrl());
+            stmt.setString(0, systemItem.getId());
+            stmt.setString(1, systemItem.getUrl());
+            stmt.setString(2, systemItem.getParentId());
             stmt.setString(3, systemItem.getDate().toString());
-            stmt.setString(4, systemItem.getSize().toString());
+            stmt.setString(4, systemItem.getType().toString());
+            stmt.setString(5, systemItem.getSize().toString());
 
             log.info("Trying to execute the query to save {}...", systemItem.getId());
             stmt.executeUpdate();
@@ -332,13 +340,13 @@ public class SystemItemDao extends GraphDao<SystemItem> {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     SystemItemExport current = new SystemItemExport();
-                    current.setId(rs.getString("s.id"));
-                    current.setUrl(rs.getString("s.url"));
-                    current.setParentId(rs.getString("s.parentId"));
-                    current.setDate(LocalDateTime.parse(rs.getString("s.date")));
-                    current.setType(SystemItemType.valueOf(rs.getString("s.type")));
+                    current.setId(rs.getString("c.id"));
+                    current.setUrl(rs.getString("c.url"));
+                    current.setParentId(rs.getString("c.parentId"));
+                    current.setDate(LocalDateTime.parse(rs.getString("c.date")));
+                    current.setType(SystemItemType.valueOf(rs.getString("c.type")));
                     try {
-                        current.setSize(Integer.valueOf(rs.getString("s.size")));
+                        current.setSize(Integer.valueOf(rs.getString("c.size")));
                     } catch (NumberFormatException e) {
                         current.setSize(null);
                     }

@@ -1,6 +1,7 @@
 package com.example.yandexdisk.dao;
 
 import com.example.yandexdisk.dto.SystemItemExport;
+import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.model.SystemItem;
 
 import java.util.List;

@@ -1,8 +1,10 @@
 package com.example.yandexdisk.service;
 
 import com.example.yandexdisk.dao.SystemItemDao;
+import com.example.yandexdisk.dto.SystemItemExport;
 import com.example.yandexdisk.dto.SystemItemImport;
 import com.example.yandexdisk.dto.request.SystemItemImportRequest;
+import com.example.yandexdisk.exception.EntityNotFoundException;
 import com.example.yandexdisk.exception.ValidationException;
 import com.example.yandexdisk.model.SystemItem;
 import com.example.yandexdisk.model.SystemItemType;
@@ -52,9 +54,15 @@ public class YandexDiskService {
 
     /**
      * path: /nodes/{id}
+     *
      */
-    public void handleSystemItemGetRequest(String id) {
-        repository.findById(id);
+    public SystemItemExport handleSystemItemGetRequest(String id) throws EntityNotFoundException {
+        Optional<SystemItemExport> response = repository.findAllById(id);
+        if (response.isEmpty()) {
+            log.info("Getting SystemItems by id: {} was failed", id);
+            throw new EntityNotFoundException(id);
+        }
+        return response.get();
     }
 
     /**
@@ -64,15 +72,15 @@ public class YandexDiskService {
      */
     private void systemItemImportRequestIsValid(SystemItemImportRequest request) throws ValidationException {
         // Todo: проаннотировать поля @NotNull и написать handler
-        // Todo: id == parentId?
+        // Todo: написать нормальные логи
         checkUniqueId(request);
-        // Todo: а если родителя нет?
         checkTypeOfParent(request);
         checkUrlOfFolder(request);
         checkUrlSize(request);
         checkFolderSize(request);
         checkFileSize(request);
         checkIdIsEmpty(request);
+        checkIdEuqalsParentId(request);
     }
 
     /**
@@ -81,9 +89,19 @@ public class YandexDiskService {
     private void checkUniqueId(SystemItemImportRequest request) throws ValidationException {
         Set<String> ids = new HashSet<>();
         for (SystemItemImport systemItemImport : request.getItems()) {
-            if (ids.contains(systemItemImport.getId()))
+            if (ids.contains(systemItemImport.getId())) {
+                log.error("SystemItemImport ID is repeated");
                 throw new ValidationException("SystemItemImport ID shouldn't be repeated");
-            else ids.add(systemItemImport.getId());
+            } else ids.add(systemItemImport.getId());
+        }
+    }
+
+    private void checkIdEuqalsParentId(SystemItemImportRequest request) throws ValidationException {
+        for (SystemItemImport systemItemImport : request.getItems()) {
+            if (systemItemImport.getId().equals(systemItemImport.getParentId())) {
+                log.error("SystemItemImport ID euqals SystemItemImport parentId");
+                throw new ValidationException("SystemItemImport ID shouldn't be euqals SystemItemImport parentId");
+            }
         }
     }
 
