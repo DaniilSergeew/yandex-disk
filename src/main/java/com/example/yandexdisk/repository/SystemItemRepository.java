@@ -1,4 +1,4 @@
-package com.example.yandexdisk.dao;
+package com.example.yandexdisk.repository;
 
 import com.example.yandexdisk.dto.SystemItemExport;
 import com.example.yandexdisk.exception.EntityNotFoundException;
@@ -20,7 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Component
-public class SystemItemDao extends GraphDao<SystemItem> {
+public class SystemItemRepository extends GraphRepository<SystemItem> {
 
     private Connection getConnection() throws SQLException {
         String path = "jdbc:neo4j:bolt://localhost:7687";
@@ -91,6 +91,7 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        processSumOfChild();
     }
 
     /**
@@ -273,6 +274,7 @@ public class SystemItemDao extends GraphDao<SystemItem> {
                 parent.ifPresent(item -> createRelationship(systemItem, item));
             }
         }
+        processSumOfChild();
     }
 
     /**
@@ -382,5 +384,11 @@ public class SystemItemDao extends GraphDao<SystemItem> {
         }
         return allChildren;
     }
+
+    /**
+     * Вычисляет суммарный размер всех элементов каждой папки и сохраняет изменения в БД.
+     * Необходимо вызывать после DDL и DML операций с БД для сохранения консистентности данных.
+     */
+    private void processSumOfChild() {}
 
 }

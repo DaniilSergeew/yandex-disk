@@ -1,4 +1,4 @@
-package com.example.yandexdisk.dao;
+package com.example.yandexdisk.repository;
 
 import com.example.yandexdisk.dto.SystemItemExport;
 import com.example.yandexdisk.exception.EntityNotFoundException;
@@ -10,7 +10,7 @@ import java.util.Optional;
 /**
  * Абстрактный класс с CRUD методами для графовой БД
  */
-public abstract class GraphDao<T> {
+public abstract class GraphRepository<T> {
     public abstract int count();
 
     public abstract void deleteAll();

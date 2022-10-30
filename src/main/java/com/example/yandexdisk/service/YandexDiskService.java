@@ -1,6 +1,6 @@
 package com.example.yandexdisk.service;
 
-import com.example.yandexdisk.dao.SystemItemDao;
+import com.example.yandexdisk.repository.SystemItemRepository;
 import com.example.yandexdisk.dto.SystemItemExport;
 import com.example.yandexdisk.dto.SystemItemImport;
 import com.example.yandexdisk.dto.request.SystemItemImportRequest;
@@ -23,7 +23,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Service
 public class YandexDiskService {
-    private final SystemItemDao repository;
+    private final SystemItemRepository repository;
 
     /**
      * path: /imports
