@@ -18,7 +18,7 @@ import java.util.*;
  * Класс, отвечающий за логику обработки запросов.
  * Работает с базой данных посредством объекта SystemItemDao
  */
-
+// Todo: добавить в сообщения об исключениях id
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -54,7 +54,6 @@ public class YandexDiskService {
 
     /**
      * path: /nodes/{id}
-     *
      */
     public SystemItemExport handleSystemItemGetRequest(String id) throws EntityNotFoundException {
         Optional<SystemItemExport> response = repository.findAllById(id);
@@ -150,11 +149,9 @@ public class YandexDiskService {
      */
     private void checkUrlOfFolder(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
-            if (systemItemImport.getType() == SystemItemType.FOLDER) {
-                if (systemItemImport.getUrl() != null) {
-                    log.error("SystemItemImport with id: {} | url for FOLDER is NULL", systemItemImport.getId());
-                    throw new ValidationException("SystemItemImport with id: {} | url for FOLDER should be NULL");
-                }
+            if (systemItemImport.getType() == SystemItemType.FOLDER && systemItemImport.getUrl() != null) {
+                log.error("SystemItemImport with id: {} | url for FOLDER is NULL", systemItemImport.getId());
+                throw new ValidationException("SystemItemImport with id: {} | url for FOLDER should be NULL");
             }
         }
     }
