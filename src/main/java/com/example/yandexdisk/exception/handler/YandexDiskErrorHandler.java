@@ -12,10 +12,10 @@ import org.springframework.web.context.request.WebRequest;
 
 @ControllerAdvice
 @Slf4j
-public class YandexDiskErrorHandlingController {
+public class YandexDiskErrorHandler {
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<Void> handleValidationException(ValidationException ex) {
-        log.error("ValidationException " + ex.getMessage());
+        //log.error("ValidationException " + ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
