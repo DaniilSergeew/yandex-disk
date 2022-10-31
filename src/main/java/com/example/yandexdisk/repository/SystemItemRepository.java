@@ -69,33 +69,54 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         }
     }
 
+    /**
+     * Удаляет элемент в БД по его id, включая все дочерние элементы
+     * @param id рута в БД
+     * @throws IllegalArgumentException если id равен null.
+     */
     @Override
     public void deleteAllByParentId(String id) throws IllegalArgumentException, EntityNotFoundException {
+        // Я не знаю как каскадно удалить элементы и поэтому сделаю это итеративно
         if (id == null) {
             throw new IllegalArgumentException();
         }
-        if (findById(id).isEmpty()) {
-            throw new EntityNotFoundException(id);
+        SystemItem root = findById(id).orElseThrow(() -> new EntityNotFoundException(id));
+        List<SystemItem> elementsForDeleting = findAllDownItems(root);
+        for (int i = elementsForDeleting.size() - 1; i >= 0; i--) {
+            deleteByParentId(elementsForDeleting.get(i).getId());
         }
-        // Todo: разобраться с корректностью запроса
+        // Удаляются вроде бы только внуки
+    }
+
+    /**
+     * Удаляет элемент по его id и все связи вокруг него.
+     * @param id элемента в БД.
+     * @throws IllegalArgumentException если id равен null.
+     */
+    private void deleteByParentId(String id) throws IllegalArgumentException {
+        if (id == null) {
+            throw new IllegalArgumentException();
+        }
         String query = """
-                MATCH path = (c:SystemItem)-[parent]->(cc:SystemItem)
-                WHERE c.id = "Ребенок1.3"
-                DETACH DELETE path""";
+                MATCH (c:SystemItem)
+                WHERE c.id = $0
+                DETACH DELETE c""";
         log.info("Trying to connect to the database...");
         try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(query)) {
-            log.info("Trying to execute the query to delete nodes with root id: {}", id);
+            stmt.setString(0, id);
+            log.info("Trying to execute the query to delete node with id: {}", id);
             stmt.executeUpdate();
             log.info("The query is successfully executed");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        processSumOfChild();
     }
 
     /**
-     * @return истину, в случае, если элемент с указанным id имеется в БД
+     * @return истину, в случае, если элемент с указанным id имеется в БД.
+     * @param id элемента в БД.
+     * @throws IllegalArgumentException если id равен null.
      */
     @Override
     public boolean existsById(String id) throws IllegalArgumentException {
@@ -112,6 +133,8 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
 
     /**
      * @return сущность из БД по ее id
+     * @param id элемента в БД
+     * @throws IllegalArgumentException если id равен null
      */
     @Override
     public Optional<SystemItem> findById(String id) throws IllegalArgumentException {
@@ -153,6 +176,12 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         return Optional.empty();
     }
 
+    /**
+     *
+     * @param id элемента в БД
+     * @return всю иерархию элементов в БД начиная с элемента рута
+     * @throws IllegalArgumentException если id равен null
+     */
     @Override
     public Optional<SystemItemExport> findAllById(String id) throws IllegalArgumentException {
         if (id == null) {
@@ -182,7 +211,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         List<SystemItemExport> up = new CopyOnWriteArrayList<>();
         up.add(globalRoot);
         // Дети корня на текщей итерации
-        List<SystemItemExport> middle = new CopyOnWriteArrayList<>(findAllChildrenById(id));
+        List<SystemItemExport> middle = new CopyOnWriteArrayList<>(findAllExportChildrenById(id));
         globalRoot.setChildren(new CopyOnWriteArrayList<>());
         // Внуки на текущей итерации
         List<SystemItemExport> down = new CopyOnWriteArrayList<>();
@@ -193,7 +222,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
                 // Перебор детей каждого корня
                 for (SystemItemExport middleItem : middle) {
                     // Сохраняем всех внуков в одном общем массиве
-                    down.addAll(findAllChildrenById(middleItem.getId()));
+                    down.addAll(findAllExportChildrenById(middleItem.getId()));
                     // Если мэтчатся родитель и ребенок, то добавляем ребенка родителю
                     if (middleItem.getParentId().equals(upItem.getId())) {
                         upItem.getChildren().add(middleItem);
@@ -214,6 +243,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
     /**
      * Сохраняет сущность в БД.
      * Создает двухстороннюю связь родитель-ребенок, если родитель тот есть в БД
+     * @throws IllegalArgumentException если systemItem равен null
      */
     @Override
     public void save(SystemItem systemItem) throws IllegalArgumentException {
@@ -249,6 +279,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
     /**
      * Сохраняет лист сущностей в БД.
      * Создает двухсторонние связи родитель-ребенок в БД, если это возможно.
+     * @throws IllegalArgumentException если systemItems равен null
      */
     @Override
     public void saveAll(List<SystemItem> systemItems) throws IllegalArgumentException {
@@ -279,6 +310,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
 
     /**
      * @return запрос на сохранение листа сущностей в БД без создания связей
+     * @throws IllegalArgumentException если systemItems равен null
      */
     private String getSaveAllQuery(List<SystemItem> systemItems) throws IllegalArgumentException {
         if (systemItems == null) {
@@ -321,6 +353,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
      *
      * @param child  ребенок, уже имеющийся в БД
      * @param parent родитель, уже имеющийся в БД
+     * @throws IllegalArgumentException если хотя бы один из параметров равен null
      */
     private void createRelationship(SystemItem child, SystemItem parent) throws IllegalArgumentException {
         if (child == null || parent == null) {
@@ -349,7 +382,13 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         }
     }
 
-    private List<SystemItemExport> findAllChildrenById(String id) {
+    /**
+     * @throws IllegalArgumentException если id равен null
+     */
+    private List<SystemItemExport> findAllExportChildrenById(String id) throws IllegalArgumentException {
+        if (id == null) {
+            throw new IllegalArgumentException();
+        }
         List<SystemItemExport> allChildren = new ArrayList<>();
         String query = """
                 MATCH (s:SystemItem {id: $0})-[:parent]->(c:SystemItem)
@@ -385,10 +424,83 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         return allChildren;
     }
 
+    private List<SystemItem> findAllChildrenById(String id) {
+        List<SystemItem> allChildren = new ArrayList<>();
+        String query = """
+                MATCH (s:SystemItem {id: $0})-[:parent]->(c:SystemItem)
+                RETURN c.id, c.url, c.parentId, c.date, c.type, c.size""";
+        try (Connection con = getConnection();
+             PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setString(0, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    SystemItem current = new SystemItem();
+                    current.setId(rs.getString("c.id"));
+                    current.setUrl(rs.getString("c.url"));
+                    current.setParentId(rs.getString("c.parentId"));
+                    current.setDate(LocalDateTime.parse(rs.getString("c.date")));
+                    current.setType(SystemItemType.valueOf(rs.getString("c.type")));
+                    try {
+                        current.setSize(Integer.valueOf(rs.getString("c.size")));
+                    } catch (NumberFormatException e) {
+                        current.setSize(null);
+                    }
+                    allChildren.add(current);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return allChildren;
+    }
+
     /**
      * Вычисляет суммарный размер всех элементов каждой папки и сохраняет изменения в БД.
      * Необходимо вызывать после DDL и DML операций с БД для сохранения консистентности данных.
      */
-    private void processSumOfChild() {}
+    private void processSumOfChild() {
+        // Запросить все узлы, которые являются рутами
+        // Потом... пиздец нахуй блин
+    }
+
+    /**
+     *
+     * @return список элементов которые находятся ниже по иерархии
+     * в БД, включая root
+     */
+    private List<SystemItem> findAllDownItems(SystemItem root) {
+        List<SystemItem> allDownItems = new ArrayList<>();
+        allDownItems.add(root);
+        allDownItems.addAll(findAllChildrenById(root.getId()));
+        List<SystemItem> up = new CopyOnWriteArrayList<>();
+        up.add(root);
+        // Дети корня на текщей итерации
+        List<SystemItem> middle = new CopyOnWriteArrayList<>(findAllChildrenById(root.getId()));
+        // Внуки на текущей итерации
+        List<SystemItem> down = new CopyOnWriteArrayList<>();
+        // Цикл, отвечающйи за проход по "этажам"
+        while (true) {
+            boolean listIsNotChanged = true;
+            // Перебор корней
+            for (SystemItem upItem : up) {
+                // Перебор детей каждого корня
+                for (SystemItem middleItem : middle) {
+                    // Сохраняем всех внуков в одном общем массиве
+                    if (down.addAll(findAllChildrenById(middleItem.getId()))) {
+                        listIsNotChanged = false;
+                    }
+                }
+            }
+            // Условие выхода: отсутствие детей у среднего уровня
+            if (listIsNotChanged) {
+                break;
+            }
+            up = new CopyOnWriteArrayList<>(middle);
+            middle = new CopyOnWriteArrayList<>(down);
+            allDownItems.addAll(down);
+            down.clear();
+        }
+        return allDownItems;
+    }
 
 }

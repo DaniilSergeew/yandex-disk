@@ -135,6 +135,7 @@ public class YandexDiskService {
 
                 Optional<SystemItem> parentFromRepository = repository.findById(systemItemImport.getParentId());
                 if (parentFromRepository.isPresent() && parentFromRepository.get().getType() == SystemItemType.FILE) {
+                    // With id*
                     log.error("SystemItemImport with ParentId: {} | have a file parent",
                             systemItemImport.getParentId());
                     throw new ValidationException("SystemItemImport with ParentId: {} | The parent of a FILE or FOLDER can only be a FOLDER");
