@@ -5,7 +5,7 @@
 
 К контроллеру добавлен **OpenApi Swagger**. По следующему адресу можно посмотреть документацию по данному сервису.
 ```
-http://http://localhost:8080/swagger-ui/index.html
+//http://localhost:8080/swagger-ui/index.html
 ```
 Для хранения данных использовалась субд **neo4j**.
 
