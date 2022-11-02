@@ -85,7 +85,6 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         for (int i = elementsForDeleting.size() - 1; i >= 0; i--) {
             deleteByParentId(elementsForDeleting.get(i).getId());
         }
-        // Удаляются вроде бы только внуки
     }
 
     /**
