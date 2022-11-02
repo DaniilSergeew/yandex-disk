@@ -81,7 +81,7 @@ public class YandexDiskService {
     }
 
     /**
-     * Проверка на: в одном запросе не может быть двух элементов с одинаковым id
+     * @throws ValidationException если в одном запросе есть два элемента одинаковым id
      */
     private void checkUniqueId(SystemItemImportRequest request) throws ValidationException {
         Set<String> ids = new HashSet<>();
@@ -93,6 +93,10 @@ public class YandexDiskService {
         }
     }
 
+    /**
+     *
+     * @throws ValidationException если в запросе есть циклическая зависимость
+     */
     private void checkIdEuqalsParentId(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
             if (systemItemImport.getId().equals(systemItemImport.getParentId())) {
@@ -103,7 +107,7 @@ public class YandexDiskService {
     }
 
     /**
-     * Проверка на: id элемента не может быть пустой строкой
+     * @throws ValidationException если в запросе есть элемент с пустой строкой на месте id
      */
     private void checkIdIsEmpty(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
@@ -115,7 +119,7 @@ public class YandexDiskService {
     }
 
     /**
-     * Проверка на: родителем элемента может быть только папка
+     * @throws ValidationException если в запросе есть элемент, родителем которого является файл
      */
     private void checkTypeOfParent(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
@@ -146,7 +150,7 @@ public class YandexDiskService {
     }
 
     /**
-     * Проверка на: поле url при импорте папки всегда должно быть равно null
+     * @throws ValidationException если url папки не равен null
      */
     private void checkUrlOfFolder(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
@@ -158,7 +162,7 @@ public class YandexDiskService {
     }
 
     /**
-     * Проверка на: размер поля url при импорте файла всегда должен быть меньше либо равным 255
+     * @throws ValidationException если размер поля url при импорте файла больше 255
      */
     private void checkUrlSize(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
@@ -171,7 +175,7 @@ public class YandexDiskService {
     }
 
     /**
-     * Проверка на: поле size при импорте папки всегда должно быть равно null
+     * @throws ValidationException если поле size при импорте папки не равно null
      */
     private void checkFolderSize(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
@@ -184,7 +188,7 @@ public class YandexDiskService {
     }
 
     /**
-     * Проверка на: поле size для файлов всегда должно быть больше 0
+     * @throws ValidationException поле size для файлов меньше или равно нулю
      */
     private void checkFileSize(SystemItemImportRequest request) throws ValidationException {
         for (SystemItemImport systemItemImport : request.getItems()) {
