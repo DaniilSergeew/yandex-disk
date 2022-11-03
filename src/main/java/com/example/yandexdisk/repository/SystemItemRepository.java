@@ -71,6 +71,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
 
     /**
      * Удаляет элемент в БД по его id, включая все дочерние элементы
+     *
      * @param id рута в БД
      * @throws IllegalArgumentException если id равен null.
      */
@@ -89,6 +90,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
 
     /**
      * Удаляет элемент по его id и все связи вокруг него.
+     *
      * @param id элемента в БД.
      * @throws IllegalArgumentException если id равен null.
      */
@@ -113,8 +115,8 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
     }
 
     /**
-     * @return истину, в случае, если элемент с указанным id имеется в БД.
      * @param id элемента в БД.
+     * @return истину, в случае, если элемент с указанным id имеется в БД.
      * @throws IllegalArgumentException если id равен null.
      */
     @Override
@@ -131,8 +133,8 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
     }
 
     /**
-     * @return сущность из БД по ее id
      * @param id элемента в БД
+     * @return сущность из БД по ее id
      * @throws IllegalArgumentException если id равен null
      */
     @Override
@@ -176,7 +178,6 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
     }
 
     /**
-     *
      * @param id элемента в БД
      * @return всю иерархию элементов в БД начиная с элемента рута
      * @throws IllegalArgumentException если id равен null
@@ -242,6 +243,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
     /**
      * Сохраняет сущность в БД.
      * Создает двухстороннюю связь родитель-ребенок, если родитель тот есть в БД
+     *
      * @throws IllegalArgumentException если systemItem равен null
      */
     @Override
@@ -278,6 +280,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
     /**
      * Сохраняет лист сущностей в БД.
      * Создает двухсторонние связи родитель-ребенок в БД, если это возможно.
+     *
      * @throws IllegalArgumentException если systemItems равен null
      */
     @Override
@@ -458,12 +461,31 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
      * Необходимо вызывать после DDL и DML операций с БД для сохранения консистентности данных.
      */
     private void processSumOfChild() {
-        // Запросить все узлы, которые являются рутами
-        // Потом... пиздец нахуй блин
+
     }
 
+    private List<SystemItem> findAllRoots() {
+        List<SystemItem> allRoots = new ArrayList<>();
+        String query = """
+                MATCH ownership = shortestPath((owner:SystemItem)-[:parent*0..]->(acquired:SystemItem))
+                WHERE NOT ()-[:parent]->(owner) and acquired.id = head(nodes(ownership)).id
+                RETURN acquired.id AS root;""";
+        try (Connection con = getConnection();
+             PreparedStatement stmt = con.prepareStatement(query)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    SystemItem current = findById(rs.getString("root")).get();
+                    allRoots.add(current);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return allRoots;
+    }
+
+
     /**
-     *
      * @return список элементов которые находятся ниже по иерархии
      * в БД, включая root
      */
