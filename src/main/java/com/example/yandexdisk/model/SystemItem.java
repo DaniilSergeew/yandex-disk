@@ -23,4 +23,11 @@ public class SystemItem {
     private SystemItemType type;
 
     private Integer size;
+
+    public Integer getSize() {
+        if (size == null) {
+            return 0;
+        }
+        return size;
+    }
 }
