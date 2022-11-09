@@ -9,9 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -37,12 +35,8 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         String query = """
                 MATCH (n:SystemItem)
                 RETURN count(*) as counter""";
-        log.info("Trying to connect to the database...");
-        try (Connection con = getConnection();
-             PreparedStatement stmt = con.prepareStatement(query)) {
-            log.info("Trying to execute the query to find count of nodes...");
+        try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.executeQuery();
-            log.info("The query is successfully executed");
             try (ResultSet rs = stmt.executeQuery()) {
                 rs.next();
                 return Integer.parseInt(rs.getString("counter"));
@@ -58,12 +52,8 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
     @Override
     public void deleteAll() {
         String query = "MATCH (n) DETACH DELETE n";
-        log.info("Trying to connect to the database...");
-        try (Connection con = getConnection();
-             PreparedStatement stmt = con.prepareStatement(query)) {
-            log.info("Trying to execute the query to delete all nodes...");
+        try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.executeUpdate();
-            log.info("The query is successfully executed");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -102,13 +92,9 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
                 MATCH (c:SystemItem)
                 WHERE c.id = $0
                 DETACH DELETE c""";
-        log.info("Trying to connect to the database...");
-        try (Connection con = getConnection();
-             PreparedStatement stmt = con.prepareStatement(query)) {
+        try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(0, id);
-            log.info("Trying to execute the query to delete node with id: {}", id);
             stmt.executeUpdate();
-            log.info("The query is successfully executed");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -146,13 +132,8 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
                 MATCH (s:SystemItem)
                 WHERE s.id = $0
                 RETURN s.id, s.url, s.parentId, s.date, s.type, s.size""";
-        log.info("Trying to connect to the database...");
-        try (Connection con = getConnection();
-             PreparedStatement stmt = con.prepareStatement(query)) {
-            log.info("The connection was successful");
-            log.info("Trying to execute the query to find SystemItem with id {}...", id);
+        try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(0, id);
-            log.info("The query is successfully executed");
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     SystemItem systemItem = new SystemItem();
@@ -166,14 +147,12 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
                     } catch (NumberFormatException e) {
                         systemItem.setSize(null);
                     }
-                    log.info("Entity is successfully founded");
                     return Optional.of(systemItem);
                 }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        log.info("Entity not found");
         return Optional.empty();
     }
 
@@ -194,14 +173,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         }
         // создаем корень SystemItemExport
         SystemItem rootSystemItem = optionalRoot.get();
-        SystemItemExport globalRoot = SystemItemExport.builder()
-                .id(id)
-                .url(rootSystemItem.getUrl())
-                .parentId(rootSystemItem.getParentId())
-                .date(rootSystemItem.getDate())
-                .type(rootSystemItem.getType())
-                .size(rootSystemItem.getSize())
-                .build();
+        SystemItemExport globalRoot = SystemItemExport.builder().id(id).url(rootSystemItem.getUrl()).parentId(rootSystemItem.getParentId()).date(rootSystemItem.getDate()).type(rootSystemItem.getType()).size(rootSystemItem.getSize()).build();
         // если рутом является файл, то просто возвращаем его
         if (globalRoot.getType() == SystemItemType.FILE) {
             return Optional.of(globalRoot);
@@ -252,10 +224,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
             throw new IllegalArgumentException();
         }
         String query = "CREATE (s:SystemItem {id: $0, url: $1, parentId: $2, date: $3, type: $4, size: $5})";
-        log.info("Trying to connect to the database...");
-        try (Connection con = getConnection();
-             PreparedStatement stmt = con.prepareStatement(query)) {
-            log.info("The connection was successful");
+        try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
 
             stmt.setString(0, systemItem.getId());
             stmt.setString(1, systemItem.getUrl());
@@ -264,9 +233,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
             stmt.setString(4, systemItem.getType().toString());
             stmt.setString(5, systemItem.getSize().toString());
 
-            log.info("Trying to execute the query to save {}...", systemItem.getId());
             stmt.executeUpdate();
-            log.info("The query is successfully executed");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -290,13 +257,8 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         }
         // Создаем запрос к базе на сохранение и выполняем его
         String query = getSaveAllQuery(systemItems);
-        log.info("Trying to connect to the database...");
-        try (Connection con = getConnection();
-             PreparedStatement stmt = con.prepareStatement(query)) {
-            log.info("The connection was successful");
-            log.info("Trying to execute the query to save systemItems");
+        try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.executeUpdate();
-            log.info("The query is successfully executed");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -367,18 +329,11 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
                 CREATE (child)-[:child]->(parent),
                 (parent)-[:parent]->(child)""";
 
-        log.info("Trying to connect to the database...");
-        try (Connection con = getConnection();
-             PreparedStatement stmt = con.prepareStatement(query)) {
-            log.info("The connection was successful");
+        try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
 
             stmt.setString(0, child.getId());
             stmt.setString(1, parent.getId());
-
-            log.info("Trying to execute the query to create relationship between {} and {}...",
-                    child.getId(), parent.getId());
             stmt.executeUpdate();
-            log.info("The query is successfully executed");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -395,8 +350,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         String query = """
                 MATCH (s:SystemItem {id: $0})-[:parent]->(c:SystemItem)
                 RETURN c.id, c.url, c.parentId, c.date, c.type, c.size""";
-        try (Connection con = getConnection();
-             PreparedStatement stmt = con.prepareStatement(query)) {
+        try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(0, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -426,13 +380,15 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         return allChildren;
     }
 
-    private List<SystemItem> findAllChildrenById(String id) {
+    private List<SystemItem> findAllChildrenById(String id) throws IllegalArgumentException {
+        if (id == null) {
+            throw new IllegalArgumentException();
+        }
         List<SystemItem> allChildren = new ArrayList<>();
         String query = """
                 MATCH (s:SystemItem {id: $0})-[:parent]->(c:SystemItem)
                 RETURN c.id, c.url, c.parentId, c.date, c.type, c.size""";
-        try (Connection con = getConnection();
-             PreparedStatement stmt = con.prepareStatement(query)) {
+        try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(0, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -455,35 +411,6 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         }
         return allChildren;
     }
-
-    /**
-     * Вычисляет суммарный размер всех элементов каждой папки и сохраняет изменения в БД.
-     * Необходимо вызывать после DDL и DML операций с БД для сохранения консистентности данных.
-     */
-    private void processSumOfChild() {
-
-    }
-
-    private List<SystemItem> findAllRoots() {
-        List<SystemItem> allRoots = new ArrayList<>();
-        String query = """
-                MATCH ownership = shortestPath((owner:SystemItem)-[:parent*0..]->(acquired:SystemItem))
-                WHERE NOT ()-[:parent]->(owner) and acquired.id = head(nodes(ownership)).id
-                RETURN acquired.id AS root;""";
-        try (Connection con = getConnection();
-             PreparedStatement stmt = con.prepareStatement(query)) {
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    SystemItem current = findById(rs.getString("root")).get();
-                    allRoots.add(current);
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return allRoots;
-    }
-
 
     /**
      * @return список элементов которые находятся ниже по иерархии
@@ -516,12 +443,92 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
             if (listIsNotChanged) {
                 break;
             }
+            allDownItems.addAll(down);
             up = new CopyOnWriteArrayList<>(middle);
             middle = new CopyOnWriteArrayList<>(down);
-            allDownItems.addAll(down);
             down.clear();
         }
+        // Todo: избавиться от костыля
+        Set<SystemItem> shit = new LinkedHashSet<>(allDownItems);
+        allDownItems.clear();
+        allDownItems.addAll(shit);
         return allDownItems;
     }
 
+    /**
+     * Вычисляет размеры папок и присваивает их полям в БД
+     */
+    private void processSumOfChild() {
+        List<SystemItem> allRoots = findAllRoots();
+        for (SystemItem root : allRoots) {
+            List<SystemItem> allDownItems = findAllDownItems(root);
+            Map<String, SystemItem> items = new HashMap<>();
+            for (int i = 0; i < allDownItems.size() - 1; i++) {
+                SystemItem item = allDownItems.get(i);
+                items.put(item.getId(), item);
+            }
+            for (int i = allDownItems.size() - 1; i >= 0; i--) {
+                SystemItem item = allDownItems.get(i);
+                if (items.containsKey(item.getParentId())) {
+                    SystemItem parent = items.get(item.getParentId());
+                    parent.setSize(parent.getSize() + item.getSize());
+                }
+            }
+            for (int i = allDownItems.size() - 1; i >= 0; i--) {
+                SystemItem item = allDownItems.get(i);
+                setSize(item.getId(), item.getSize());
+            }
+        }
+    }
+
+    /**
+     * Устанавливает значение полю size в БД у элемента с указанным id
+     *
+     * @throws IllegalArgumentException если хотя бы один из аргументов равен null
+     */
+    private void setSize(String id, int size) throws IllegalArgumentException {
+        if (id == null) {
+            throw new IllegalArgumentException();
+        }
+        String query = """
+                MATCH (s:SystemItem)
+                WHERE s.id = $0
+                SET s.size = $1""";
+        System.out.println(id + " добавили " + size);
+        try (Connection con = getConnection();
+             PreparedStatement stmt = con.prepareStatement(query)) {
+
+            stmt.setString(0, id);
+            stmt.setString(1, String.valueOf(size));
+
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * @return список всех корневых папок и файлов, висящих в "воздухе"
+     */
+    private List<SystemItem> findAllRoots() {
+        List<SystemItem> allRoots = new ArrayList<>();
+        String query = """
+                MATCH ownership = shortestPath((owner:SystemItem)-[:parent*0..]->(acquired:SystemItem))
+                WHERE NOT ()-[:parent]->(owner) and acquired.id = head(nodes(ownership)).id
+                RETURN acquired.id AS root;""";
+        try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Optional<SystemItem> optionalCurrent = findById(rs.getString("root"));
+                    if (optionalCurrent.isPresent()) {
+                        SystemItem current = optionalCurrent.get();
+                        allRoots.add(current);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return allRoots;
+    }
 }
