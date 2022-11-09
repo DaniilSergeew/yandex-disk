@@ -28,7 +28,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
     }
 
     /**
-     * @return количество экземпляров SystemItem в БД
+     * @return число экземпляров SystemItem в БД
      */
     @Override
     public int count() {
@@ -64,10 +64,10 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
      *
      * @param id рута в БД
      * @throws IllegalArgumentException если id равен null.
+     * @throws EntityNotFoundException если элемент с указанным id не найдет в БД
      */
     @Override
     public void deleteAllByParentId(String id) throws IllegalArgumentException, EntityNotFoundException {
-        // Я не знаю как каскадно удалить элементы и поэтому сделаю это итеративно
         if (id == null) {
             throw new IllegalArgumentException();
         }
@@ -209,6 +209,12 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
             up = new CopyOnWriteArrayList<>(middle);
             middle = new CopyOnWriteArrayList<>(down);
             down.clear();
+            Set<SystemItemExport> shit = new LinkedHashSet<>(up);
+            up.clear();
+            up.addAll(shit);
+            Set<SystemItemExport> shitt = new LinkedHashSet<>(middle);
+            middle.clear();
+            middle.addAll(shitt);
         }
     }
 
@@ -340,6 +346,7 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
     }
 
     /**
+     * @return список всех детей элемента с указанным id
      * @throws IllegalArgumentException если id равен null
      */
     private List<SystemItemExport> findAllExportChildrenById(String id) throws IllegalArgumentException {
@@ -380,6 +387,10 @@ public class SystemItemRepository extends GraphRepository<SystemItem> {
         return allChildren;
     }
 
+    /**
+     * @return список всех детей элемента с указанным id
+     * @throws IllegalArgumentException если id равен null
+     */
     private List<SystemItem> findAllChildrenById(String id) throws IllegalArgumentException {
         if (id == null) {
             throw new IllegalArgumentException();
