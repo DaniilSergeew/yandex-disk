@@ -30,6 +30,5 @@ public class YandexDiskErrorHandler {
         log.error("MethodArgumentNotValidException " + ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
-    // Todo: добавить обработчик для sql exception
-    // Todo: HttpMessageNotReadableException
+
 }
