@@ -12,6 +12,8 @@ services:
       NEO4J_AUTH: neo4j/pass
       NEO4J_dbms_logs_debug_level: DEBUG
       neo4j:server:uri: bolt://localhost:7687
+    networks:
+      - yandex-disk
 
   app:
     container_name: app
@@ -25,4 +27,14 @@ services:
       - "db:database"
     ports:
       - "8080:8080"
+    networks:
+      - yandex-disk
+
+
+networks:
+  yandex-disk:
+    name: yandex-disk-net
+    driver: bridge
+    ipam:
+      driver: default
 

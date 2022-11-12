@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SystemItemRepository extends GraphRepository<SystemItem> {
 
     private Connection getConnection() throws SQLException {
-        String path = "jdbc:neo4j:bolt://localhost:7687";
+        String path = "jdbc:neo4j:bolt://db:7687";
         String user = "neo4j";
         String password = "pass";
         return DriverManager.getConnection(path, user, password);
